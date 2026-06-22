@@ -11,6 +11,7 @@ use App\Models\Receta;
 use App\Models\Profesional;
 use App\Models\Especialidad;
 use App\Models\Ipress;
+use App\Models\Banner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -106,5 +107,88 @@ class AdminController extends Controller
         $receta->save();
 
         return redirect()->route('admin.recetas')->with('success', 'Receta emitida correctamente.');
+    }
+
+    public function banners()
+    {
+        $banners = Banner::orderBy('created_at', 'desc')->paginate(15);
+        return view('admin.banners.index', compact('banners'));
+    }
+
+    public function createBanner()
+    {
+        return view('admin.banners.create');
+    }
+
+    public function storeBanner(Request $request)
+    {
+        $request->validate([
+            'titulo' => 'required|string|max:255',
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'link_url' => 'nullable|url'
+        ]);
+
+        $banner = new Banner();
+        $banner->titulo = $request->titulo;
+        
+        if ($request->hasFile('imagen')) {
+            $imageName = time().'.'.$request->imagen->extension();  
+            $path = public_path('uploads/banners');
+            if (!file_exists($path)) {
+                mkdir($path, 0777, true);
+            }
+            $request->imagen->move($path, $imageName);
+            $banner->imagen_url = '/uploads/banners/' . $imageName;
+        }
+
+        $banner->link_url = $request->link_url;
+        $banner->estado = $request->has('estado') ? true : false;
+        $banner->save();
+
+        return redirect()->route('admin.banners')->with('success', 'Banner publicitario subido exitosamente.');
+    }
+
+    public function editBanner($id)
+    {
+        $banner = Banner::findOrFail($id);
+        return view('admin.banners.edit', compact('banner'));
+    }
+
+    public function updateBanner(Request $request, $id)
+    {
+        $banner = Banner::findOrFail($id);
+
+        $request->validate([
+            'titulo' => 'required|string|max:255',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'link_url' => 'nullable|url'
+        ]);
+
+        $banner->titulo = $request->titulo;
+        
+        if ($request->hasFile('imagen')) {
+            $imageName = time().'.'.$request->imagen->extension();  
+            $path = public_path('uploads/banners');
+            if (!file_exists($path)) {
+                mkdir($path, 0777, true);
+            }
+            $request->imagen->move($path, $imageName);
+            $banner->imagen_url = '/uploads/banners/' . $imageName;
+        }
+
+        $banner->link_url = $request->link_url;
+        $banner->estado = $request->has('estado') ? true : false;
+        $banner->save();
+
+        return redirect()->route('admin.banners')->with('success', 'Banner actualizado correctamente.');
+    }
+
+    public function toggleBannerEstado($id)
+    {
+        $banner = Banner::findOrFail($id);
+        $banner->estado = !$banner->estado;
+        $banner->save();
+
+        return back()->with('success', 'El estado del banner ha sido actualizado.');
     }
 }

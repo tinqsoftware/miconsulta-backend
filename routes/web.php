@@ -23,4 +23,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/recetas', [AdminController::class, 'recetas'])->name('recetas');
     Route::get('/recetas/crear', [AdminController::class, 'createReceta'])->name('recetas.create');
     Route::post('/recetas/crear', [AdminController::class, 'storeReceta'])->name('recetas.store');
+
+    // Banners
+    Route::get('/banners', [AdminController::class, 'banners'])->name('banners');
+    Route::get('/banners/crear', [AdminController::class, 'createBanner'])->name('banners.create');
+    Route::post('/banners/crear', [AdminController::class, 'storeBanner'])->name('banners.store');
+    Route::get('/banners/{id}/editar', [AdminController::class, 'editBanner'])->name('banners.edit');
+    Route::post('/banners/{id}/editar', [AdminController::class, 'updateBanner'])->name('banners.update');
+    Route::post('/banners/{id}/estado', [AdminController::class, 'toggleBannerEstado'])->name('banners.estado');
 });

@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\V1\RecetaController;
 use App\Http\Controllers\Api\V1\TomasController;
 use App\Http\Controllers\Api\V1\NotificacionController;
 use App\Http\Controllers\Api\V1\PerfilController;
+use App\Http\Controllers\Api\V1\BannerController;
+use App\Http\Controllers\API\RecordatorioController;
 
 Route::prefix('v1')->group(function () {
     // Auth (Públicas)
@@ -15,6 +17,9 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/olvide-contrasena', [AuthController::class, 'olvideContrasena']);
     Route::post('/auth/verificar-codigo', [AuthController::class, 'verificarCodigo']);
     Route::post('/auth/cambiar-contrasena', [AuthController::class, 'cambiarContrasena']);
+
+    // Banners (Pública o protegida, la pondremos pública para facilidad)
+    Route::get('/banners/activos', [BannerController::class, 'activos']);
 
     // Rutas protegidas (Requieren token)
     Route::middleware('auth:sanctum')->group(function () {
@@ -35,10 +40,16 @@ Route::prefix('v1')->group(function () {
         Route::get('/recetas/mis-recetas', [RecetaController::class, 'misRecetas']);
         Route::get('/recetas/{id}/pdf', [RecetaController::class, 'descargarPdf']);
 
-        // Seguimiento de Tomas
+        // Seguimiento de Tomas (Antiguos)
         Route::get('/tomas/mis-tomas', [TomasController::class, 'misTomas']);
         Route::put('/tomas/{id}/estado', [TomasController::class, 'marcarToma']);
         Route::get('/tomas/adherencia', [TomasController::class, 'getAdherencia']);
+
+        // Nuevas Rutas Recordatorios y Seguimiento
+        Route::put('/recetas/{id}/toggle-recordatorios', [RecordatorioController::class, 'toggleRecordatorios']);
+        Route::post('/recetas/{id}/programar-tomas', [RecordatorioController::class, 'programarTomas']);
+        Route::get('/recetas/{id}/tomas-dia', [RecordatorioController::class, 'obtenerTomasPorDia']);
+        Route::put('/tomas/{id_toma}', [RecordatorioController::class, 'marcarToma']);
 
         // Notificaciones
         Route::get('/notificaciones', [NotificacionController::class, 'misNotificaciones']);

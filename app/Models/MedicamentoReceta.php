@@ -11,7 +11,8 @@ class MedicamentoReceta extends Model
 
     protected $fillable = [
         'id_receta', 'id_medicamento', 'cantidad', 
-        'unidad_formato', 'indicacion', 'esta_disponible', 'id_usuario'
+        'unidad_formato', 'indicacion', 'esta_disponible', 'id_usuario',
+        'dias', 'total_tomas', 'recordatorios_activados'
     ];
 
     public function medicamento()
@@ -22,5 +23,10 @@ class MedicamentoReceta extends Model
     public function receta()
     {
         return $this->belongsTo(Receta::class, 'id_receta');
+    }
+
+    public function seguimientos()
+    {
+        return $this->hasMany(SeguimientoToma::class, 'id_medicamentos_receta');
     }
 }
