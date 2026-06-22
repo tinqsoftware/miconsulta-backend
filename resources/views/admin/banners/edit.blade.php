@@ -27,7 +27,7 @@
 
             <div>
                 <label for="link_url" class="block text-sm font-medium text-gray-700">Enlace (Opcional)</label>
-                <input type="url" name="link_url" id="link_url" value="{{ $banner->link_url }}" placeholder="https://..." class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <input type="text" name="link_url" id="link_url" value="{{ $banner->link_url }}" placeholder="Ej: /sintomas, miconsulta://sintomas, https://google.com" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
 
             <div class="flex items-start">

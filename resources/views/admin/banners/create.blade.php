@@ -24,7 +24,7 @@
 
             <div>
                 <label for="link_url" class="block text-sm font-medium text-gray-700">Enlace (Opcional)</label>
-                <input type="url" name="link_url" id="link_url" placeholder="https://..." class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <input type="text" name="link_url" id="link_url" placeholder="Ej: /sintomas, miconsulta://sintomas, https://google.com" value="{{ old('link_url') }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <p class="mt-1 text-xs text-gray-500">URL a la que se dirigirá al usuario si toca el banner.</p>
             </div>
 
