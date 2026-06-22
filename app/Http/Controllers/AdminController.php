@@ -125,7 +125,7 @@ class AdminController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'link_url' => 'nullable|url'
+            'link_url' => 'nullable|string'
         ]);
 
         $banner = new Banner();
@@ -161,7 +161,7 @@ class AdminController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'link_url' => 'nullable|url'
+            'link_url' => 'nullable|string'
         ]);
 
         $banner->titulo = $request->titulo;
