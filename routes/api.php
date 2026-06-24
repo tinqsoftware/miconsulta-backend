@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\NotificacionController;
 use App\Http\Controllers\Api\V1\PerfilController;
 use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\API\RecordatorioController;
+use App\Http\Controllers\Api\V1\ConfiguracionApiController;
 
 Route::prefix('v1')->group(function () {
     // Auth (Públicas)
@@ -20,6 +21,7 @@ Route::prefix('v1')->group(function () {
 
     // Banners (Pública o protegida, la pondremos pública para facilidad)
     Route::get('/banners/activos', [BannerController::class, 'activos']);
+    Route::get('/configuraciones', [ConfiguracionApiController::class, 'index']);
 
     // Rutas protegidas (Requieren token)
     Route::middleware('auth:sanctum')->group(function () {

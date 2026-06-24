@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BannerController;
+use App\Http\Controllers\ConfiguracionController;
 
 Route::get('/', function () {
     return redirect()->route('admin.dashboard');
@@ -29,6 +31,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/banners/crear', [AdminController::class, 'createBanner'])->name('banners.create');
     Route::post('/banners/crear', [AdminController::class, 'storeBanner'])->name('banners.store');
     Route::get('/banners/{id}/editar', [AdminController::class, 'editBanner'])->name('banners.edit');
-    Route::post('/banners/{id}/editar', [AdminController::class, 'updateBanner'])->name('banners.update');
-    Route::post('/banners/{id}/estado', [AdminController::class, 'toggleBannerEstado'])->name('banners.estado');
+    Route::post('/admin/banners/{id}', [BannerController::class, 'update'])->name('admin.banners.update');
+    Route::delete('/admin/banners/{id}', [BannerController::class, 'destroy'])->name('admin.banners.destroy');
+
+    // Configuraciones
+    Route::get('/admin/configuraciones', [ConfiguracionController::class, 'index'])->name('admin.configuraciones');
+    Route::post('/admin/configuraciones', [ConfiguracionController::class, 'update'])->name('admin.configuraciones.update');
 });

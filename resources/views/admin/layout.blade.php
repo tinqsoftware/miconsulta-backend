@@ -22,7 +22,8 @@
                     <a href="{{ route('admin.pacientes') }}" class="hover:text-blue-200">Pacientes</a>
                     <a href="{{ route('admin.citas') }}" class="hover:text-blue-200">Citas</a>
                     <a href="{{ route('admin.recetas') }}" class="hover:text-blue-200">Recetas</a>
-                    <a href="{{ route('admin.banners') }}" class="hover:text-blue-200">Banners Publicitarios</a>
+                    <a href="{{ route('admin.banners') }}" class="hover:text-blue-200">Banners</a>
+                    <a href="{{ route('admin.configuraciones') }}" class="hover:text-blue-200">Configuración</a>
                 </div>
             </div>
         </div>
