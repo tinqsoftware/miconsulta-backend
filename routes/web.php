@@ -31,10 +31,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/banners/crear', [AdminController::class, 'createBanner'])->name('banners.create');
     Route::post('/banners/crear', [AdminController::class, 'storeBanner'])->name('banners.store');
     Route::get('/banners/{id}/editar', [AdminController::class, 'editBanner'])->name('banners.edit');
-    Route::post('/admin/banners/{id}', [BannerController::class, 'update'])->name('admin.banners.update');
-    Route::delete('/admin/banners/{id}', [BannerController::class, 'destroy'])->name('admin.banners.destroy');
+    Route::post('/banners/{id}', [BannerController::class, 'update'])->name('banners.update');
+    Route::delete('/banners/{id}', [BannerController::class, 'destroy'])->name('banners.destroy');
 
     // Configuraciones
-    Route::get('/admin/configuraciones', [ConfiguracionController::class, 'index'])->name('admin.configuraciones');
-    Route::post('/admin/configuraciones', [ConfiguracionController::class, 'update'])->name('admin.configuraciones.update');
+    Route::get('/configuraciones', [ConfiguracionController::class, 'index'])->name('configuraciones');
+    Route::post('/configuraciones', [ConfiguracionController::class, 'update'])->name('configuraciones.update');
 });
