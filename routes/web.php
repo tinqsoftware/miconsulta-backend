@@ -31,6 +31,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/banners/crear', [AdminController::class, 'createBanner'])->name('banners.create');
     Route::post('/banners/crear', [AdminController::class, 'storeBanner'])->name('banners.store');
     Route::get('/banners/{id}/editar', [AdminController::class, 'editBanner'])->name('banners.edit');
+    Route::post('/banners/{id}/estado', [AdminController::class, 'toggleBannerEstado'])->name('banners.estado');
     Route::post('/banners/{id}', [BannerController::class, 'update'])->name('banners.update');
     Route::delete('/banners/{id}', [BannerController::class, 'destroy'])->name('banners.destroy');
 
