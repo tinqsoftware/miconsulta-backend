@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use App\Models\Cita;
 use App\Models\HorarioDisponible;
+use App\Models\Profesional;
 
 class CitaController extends Controller
 {
@@ -17,14 +19,34 @@ class CitaController extends Controller
             'fecha' => 'nullable|date'
         ]);
 
+        $paciente = $request->user()->paciente;
+        if (!$paciente) {
+            return response()->json(['data' => []]);
+        }
+
+        $zonaHoraria = config('app.timezone');
+        $hoy = now($zonaHoraria)->startOfDay();
+        $fecha = Carbon::parse($request->fecha ?? $hoy->toDateString(), $zonaHoraria)->startOfDay();
+
+        if ($fecha->lt($hoy)) {
+            return response()->json(['message' => 'Solo se pueden consultar horarios desde hoy.'], 422);
+        }
+
+        $this->generarAgendaDiaria($fecha, $request->tipo_cita, $paciente->id_ipress_asignada);
+
         $query = HorarioDisponible::with(['profesional', 'especialidad', 'ipress'])
             ->where('tipo_cita', $request->tipo_cita)
             ->where('esta_disponible', true)
             ->whereRaw('cupo_ocupado < cupo_maximo')
-            ->whereDate('fecha', '>=', now()->toDateString());
+            ->whereDate('fecha', $fecha->toDateString());
 
-        if ($request->fecha) {
-            $query->whereDate('fecha', $request->fecha);
+        if ($paciente->id_ipress_asignada) {
+            $query->where('id_ipress', $paciente->id_ipress_asignada);
+        }
+
+        // El paciente solo puede reservar con una hora completa de anticipación.
+        if ($fecha->isSameDay($hoy)) {
+            $query->where('hora_inicio', '>=', now($zonaHoraria)->addHour()->format('H:i:s'));
         }
 
         $horarios = $query->orderBy('fecha')->orderBy('hora_inicio')->get();
@@ -51,6 +73,17 @@ class CitaController extends Controller
             DB::beginTransaction();
 
             $horario = HorarioDisponible::lockForUpdate()->findOrFail($request->id_horario);
+
+            $inicio = Carbon::parse(
+                $horario->fecha . ' ' . $horario->hora_inicio,
+                config('app.timezone')
+            );
+            if ($inicio->lt(now(config('app.timezone'))->addHour())) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'La cita debe solicitarse con al menos una hora de anticipación.',
+                ], 422);
+            }
 
             if ($horario->cupo_ocupado >= $horario->cupo_maximo || !$horario->esta_disponible) {
                 DB::rollBack();
@@ -106,7 +139,7 @@ class CitaController extends Controller
             ->orderBy('hora', 'desc')
             ->get();
 
-        $hoy = now()->toDateString();
+        $hoy = now(config('app.timezone'))->toDateString();
         
         $proximas = $citas->filter(function ($cita) use ($hoy) {
             return $cita->fecha >= $hoy && in_array($cita->estado, ['programada', 'confirmada']);
@@ -120,5 +153,43 @@ class CitaController extends Controller
             'proximas' => $proximas,
             'pendientes_y_pasadas' => $pendientes_o_pasadas
         ]);
+    }
+
+    private function generarAgendaDiaria(Carbon $fecha, string $tipoCita, ?int $idIpress): void
+    {
+        $profesionales = Profesional::query()
+            ->where('esta_activo', true)
+            ->whereNotNull('id_especialidad')
+            ->whereNotNull('id_ipress');
+
+        if ($idIpress) {
+            $profesionales->where('id_ipress', $idIpress);
+        }
+
+        $profesionales->get()->each(function (Profesional $profesional) use ($fecha, $tipoCita) {
+            $inicio = $fecha->copy()->setTime(7, 0);
+            $finJornada = $fecha->copy()->setTime(20, 0);
+
+            while ($inicio->lt($finJornada)) {
+                HorarioDisponible::firstOrCreate(
+                    [
+                        'id_profesional' => $profesional->id,
+                        'fecha' => $fecha->toDateString(),
+                        'hora_inicio' => $inicio->format('H:i:s'),
+                        'tipo_cita' => $tipoCita,
+                    ],
+                    [
+                        'id_especialidad' => $profesional->id_especialidad,
+                        'id_ipress' => $profesional->id_ipress,
+                        'hora_fin' => $inicio->copy()->addMinutes(15)->format('H:i:s'),
+                        'cupo_maximo' => 1,
+                        'cupo_ocupado' => 0,
+                        'esta_disponible' => true,
+                    ]
+                );
+
+                $inicio->addMinutes(15);
+            }
+        });
     }
 }
