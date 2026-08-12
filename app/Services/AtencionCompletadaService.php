@@ -14,14 +14,7 @@ class AtencionCompletadaService
         $cita->loadMissing(['paciente.usuario', 'profesional']);
         $cita->update(['estado' => 'completada']);
 
-        $evaluacion = EvaluacionAtencion::firstOrCreate(
-            ['id_cita' => $cita->id],
-            [
-                'id_paciente' => $cita->id_paciente,
-                'id_profesional' => $cita->id_profesional,
-                'token_acceso' => Str::random(64),
-            ]
-        );
+        $evaluacion = $this->obtenerOCrearEvaluacion($cita);
 
         $profesional = trim(($cita->profesional->nombres ?? '') . ' ' . ($cita->profesional->apellidos ?? ''));
         $titulo = '¿Cómo fue tu atención?';
@@ -58,6 +51,18 @@ class AtencionCompletadaService
         }
 
         return $evaluacion;
+    }
+
+    public function obtenerOCrearEvaluacion(Cita $cita): EvaluacionAtencion
+    {
+        return EvaluacionAtencion::firstOrCreate(
+            ['id_cita' => $cita->id],
+            [
+                'id_paciente' => $cita->id_paciente,
+                'id_profesional' => $cita->id_profesional,
+                'token_acceso' => Str::random(64),
+            ]
+        );
     }
 
     public function enlace(EvaluacionAtencion $evaluacion): string

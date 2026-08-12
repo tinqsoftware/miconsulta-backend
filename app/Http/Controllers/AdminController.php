@@ -49,10 +49,19 @@ class AdminController extends Controller
         return view('admin.pacientes.index', compact('pacientes'));
     }
 
-    public function citas()
+    public function citas(AtencionCompletadaService $atenciones)
     {
-        $citas = Cita::with(['paciente', 'profesional', 'especialidad', 'ipress'])->orderBy('fecha', 'desc')->paginate(15);
-        return view('admin.citas.index', compact('citas'));
+        $citas = Cita::with(['paciente', 'profesional', 'especialidad', 'ipress', 'evaluacionAtencion'])
+            ->orderBy('fecha', 'desc')
+            ->paginate(15);
+
+        $enlacesEvaluacion = [];
+        foreach ($citas->where('estado', 'completada') as $cita) {
+            $evaluacion = $cita->evaluacionAtencion ?? $atenciones->obtenerOCrearEvaluacion($cita);
+            $enlacesEvaluacion[$cita->id] = $atenciones->enlace($evaluacion);
+        }
+
+        return view('admin.citas.index', compact('citas', 'enlacesEvaluacion'));
     }
 
     public function cambiarEstadoCita(Request $request, $id, AtencionCompletadaService $atenciones)

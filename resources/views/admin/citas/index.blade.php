@@ -61,6 +61,16 @@
                         "{{ $cita->motivo_consulta }}"
                     </div>
                     @endif
+                    @if($cita->estado === 'completada' && isset($enlacesEvaluacion[$cita->id]))
+                    <div class="mt-3 rounded-md bg-green-50 p-3">
+                        <p class="text-xs font-medium text-green-800">Enlace para calificar la atención</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <input id="evaluation-link-{{ $cita->id }}" class="min-w-0 flex-1 rounded border border-green-300 px-2 py-1 text-xs" readonly value="{{ $enlacesEvaluacion[$cita->id] }}">
+                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('evaluation-link-{{ $cita->id }}').value)" class="rounded bg-green-700 px-2 py-1 text-xs font-medium text-white">Copiar enlace</button>
+                            <a href="sms:?&body={{ urlencode($enlacesEvaluacion[$cita->id]) }}" class="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white">Compartir por SMS</a>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </li>
             @endforeach
