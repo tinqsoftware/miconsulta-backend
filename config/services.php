@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'firebase' => [
+        // Ruta absoluta al JSON de una cuenta de servicio de Firebase. Nunca
+        // guardes este archivo dentro del repositorio.
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+    ],
+
 ];

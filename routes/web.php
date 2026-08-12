@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BannerController;
+use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\ConfiguracionController;
 
 Route::get('/', function () {

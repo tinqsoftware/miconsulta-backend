@@ -6,6 +6,17 @@
         <h1 class="text-3xl font-bold text-gray-800">Gestión de Citas</h1>
     </div>
 
+    @if(session('evaluacion_link'))
+    <div class="mb-6 rounded-md bg-green-50 p-4">
+        <p class="font-medium text-green-800">Atención marcada como atendida. Comparte este enlace por SMS si necesitas avisar manualmente al paciente:</p>
+        <div class="mt-3 flex gap-2">
+            <input id="evaluation-link" class="flex-1 rounded border border-green-300 px-3 py-2 text-sm" readonly value="{{ session('evaluacion_link') }}">
+            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('evaluation-link').value)" class="rounded bg-green-700 px-3 py-2 text-sm font-medium text-white">Copiar enlace</button>
+            <a href="sms:?&body={{ urlencode(session('evaluacion_link')) }}" class="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white">Compartir por SMS</a>
+        </div>
+    </div>
+    @endif
+
     <div class="bg-white shadow overflow-hidden sm:rounded-md">
         <ul class="divide-y divide-gray-200">
             @foreach($citas as $cita)
@@ -34,7 +45,7 @@
                                 <form method="POST" action="{{ route('admin.citas.estado', $cita->id) }}">
                                     @csrf
                                     <input type="hidden" name="estado" value="completada">
-                                    <button type="submit" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded">✔ Completar</button>
+                                    <button type="submit" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded">✔ Marcar atendido</button>
                                 </form>
                                 <form method="POST" action="{{ route('admin.citas.estado', $cita->id) }}">
                                     @csrf

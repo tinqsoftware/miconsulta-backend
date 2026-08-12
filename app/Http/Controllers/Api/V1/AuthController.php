@@ -47,8 +47,27 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $request->user()->update(['token_fcm' => null]);
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Sesión cerrada']);
+    }
+
+    public function actualizarTokenFcm(Request $request)
+    {
+        $data = $request->validate([
+            'token_fcm' => 'required|string|max:255',
+        ]);
+
+        $request->user()->update(['token_fcm' => $data['token_fcm']]);
+
+        return response()->json(['message' => 'Token de notificaciones actualizado']);
+    }
+
+    public function eliminarTokenFcm(Request $request)
+    {
+        $request->user()->update(['token_fcm' => null]);
+
+        return response()->json(['message' => 'Token de notificaciones eliminado']);
     }
 
     public function olvideContrasena(Request $request)

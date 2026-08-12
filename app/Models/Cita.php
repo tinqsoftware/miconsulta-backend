@@ -39,4 +39,9 @@ class Cita extends Model
     {
         return $this->belongsTo(Ipress::class, 'id_ipress');
     }
+
+    public function evaluacionAtencion()
+    {
+        return $this->hasOne(EvaluacionAtencion::class, 'id_cita');
+    }
 }

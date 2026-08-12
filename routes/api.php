@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\PerfilController;
 use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\API\RecordatorioController;
 use App\Http\Controllers\Api\V1\ConfiguracionApiController;
+use App\Http\Controllers\Api\V1\EvaluacionAtencionController;
 
 Route::prefix('v1')->group(function () {
     // Auth (Públicas)
@@ -27,6 +28,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::put('/auth/biometria', [AuthController::class, 'actualizarBiometria']);
+        Route::put('/auth/token-fcm', [AuthController::class, 'actualizarTokenFcm']);
+        Route::delete('/auth/token-fcm', [AuthController::class, 'eliminarTokenFcm']);
         
         // El usuario logueado
         Route::get('/user', function (Request $request) {
@@ -57,6 +60,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/notificaciones', [NotificacionController::class, 'misNotificaciones']);
         Route::put('/notificaciones/{id}/leida', [NotificacionController::class, 'marcarLeida']);
         Route::get('/notificaciones/no-leidas', [NotificacionController::class, 'noLeidasCount']);
+
+        // Evaluación de la atención médica
+        Route::get('/evaluaciones/citas/{cita}', [EvaluacionAtencionController::class, 'show']);
+        Route::post('/evaluaciones/citas/{cita}', [EvaluacionAtencionController::class, 'store']);
 
         // Perfil
         Route::get('/perfil', [PerfilController::class, 'miPerfil']);

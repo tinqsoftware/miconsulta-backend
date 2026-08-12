@@ -14,6 +14,7 @@ use App\Models\Ipress;
 use App\Models\Banner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\AtencionCompletadaService;
 
 class AdminController extends Controller
 {
@@ -54,14 +55,21 @@ class AdminController extends Controller
         return view('admin.citas.index', compact('citas'));
     }
 
-    public function cambiarEstadoCita(Request $request, $id)
+    public function cambiarEstadoCita(Request $request, $id, AtencionCompletadaService $atenciones)
     {
         $cita = Cita::findOrFail($id);
         $estado = $request->input('estado');
         
         if (in_array($estado, ['programada', 'confirmada', 'completada', 'cancelada', 'no_asistio'])) {
-            $cita->estado = $estado;
-            $cita->save();
+            if ($estado === 'completada') {
+                $evaluacion = $atenciones->completar($cita);
+                return back()->with([
+                    'success' => 'Atención marcada como atendida y notificación creada.',
+                    'evaluacion_link' => $atenciones->enlace($evaluacion),
+                ]);
+            }
+
+            $cita->update(['estado' => $estado]);
             return back()->with('success', 'Estado de la cita actualizado a ' . strtoupper($estado));
         }
 
