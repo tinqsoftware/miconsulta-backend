@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\V1\TomasController;
 use App\Http\Controllers\Api\V1\NotificacionController;
 use App\Http\Controllers\Api\V1\PerfilController;
 use App\Http\Controllers\Api\V1\BannerController;
-use App\Http\Controllers\API\RecordatorioController;
+use App\Http\Controllers\Api\RecordatorioController;
 use App\Http\Controllers\Api\V1\ConfiguracionApiController;
 use App\Http\Controllers\Api\V1\EvaluacionAtencionController;
 
