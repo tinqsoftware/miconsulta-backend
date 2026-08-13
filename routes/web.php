@@ -9,6 +9,18 @@ Route::get('/', function () {
     return redirect()->route('admin.dashboard');
 });
 
+// Enlace HTTPS para compartir por WhatsApp/SMS. Al tocarlo, conserva el
+// esquema que ya entiende la app instalada y abre la evaluación indicada.
+Route::get('/evaluacion/{cita}', function (int $cita) {
+    $token = request()->query('token');
+
+    abort_unless(is_string($token) && $token !== '', 404);
+
+    return redirect()->away(
+        'miconsulta://evaluacion/' . $cita . '?token=' . rawurlencode($token)
+    );
+})->whereNumber('cita')->name('evaluacion.enlace');
+
 // Rutas del Panel Web (Sin sesión)
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');

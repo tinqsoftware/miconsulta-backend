@@ -67,6 +67,9 @@ class AtencionCompletadaService
 
     public function enlace(EvaluacionAtencion $evaluacion): string
     {
-        return 'miconsulta://evaluacion/' . $evaluacion->id_cita . '?token=' . urlencode($evaluacion->token_acceso);
+        return route('evaluacion.enlace', [
+            'cita' => $evaluacion->id_cita,
+            'token' => $evaluacion->token_acceso,
+        ]);
     }
 }
