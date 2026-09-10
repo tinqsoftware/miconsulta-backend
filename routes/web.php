@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\ConfiguracionController;
 
 Route::get('/', function () {
@@ -21,6 +20,18 @@ Route::get('/evaluacion/{cita}', function (int $cita) {
     );
 })->whereNumber('cita')->name('evaluacion.enlace');
 
+// El mismo patrón permite que un enlace HTTPS de deserción abra el formulario
+// correspondiente en la aplicación instalada.
+Route::get('/desercion/{cita}', function (int $cita) {
+    $token = request()->query('token');
+
+    abort_unless(is_string($token) && $token !== '', 404);
+
+    return redirect()->away(
+        'miconsulta://desercion/' . $cita . '?token=' . rawurlencode($token)
+    );
+})->whereNumber('cita')->name('desercion.enlace');
+
 // Rutas del Panel Web (Sin sesión)
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -32,6 +43,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Citas
     Route::get('/citas', [AdminController::class, 'citas'])->name('citas');
     Route::post('/citas/{id}/estado', [AdminController::class, 'cambiarEstadoCita'])->name('citas.estado');
+    Route::post('/citas/{id}/desercion', [AdminController::class, 'registrarDesercion'])->name('citas.desercion');
 
     // Recetas
     Route::get('/recetas', [AdminController::class, 'recetas'])->name('recetas');
@@ -44,8 +56,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/banners/crear', [AdminController::class, 'storeBanner'])->name('banners.store');
     Route::get('/banners/{id}/editar', [AdminController::class, 'editBanner'])->name('banners.edit');
     Route::post('/banners/{id}/estado', [AdminController::class, 'toggleBannerEstado'])->name('banners.estado');
-    Route::post('/banners/{id}', [BannerController::class, 'update'])->name('banners.update');
-    Route::delete('/banners/{id}', [BannerController::class, 'destroy'])->name('banners.destroy');
+    Route::post('/banners/{id}', [AdminController::class, 'updateBanner'])->name('banners.update');
+    Route::delete('/banners/{id}', [AdminController::class, 'destroyBanner'])->name('banners.destroy');
 
     // Configuraciones
     Route::get('/configuraciones', [ConfiguracionController::class, 'index'])->name('configuraciones');

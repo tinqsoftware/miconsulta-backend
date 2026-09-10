@@ -41,7 +41,7 @@
                                 {{ $cita->fecha }} {{ \Carbon\Carbon::parse($cita->hora)->format('g:i A') }}
                             </p>
                             <div class="mt-2 flex space-x-2">
-                                @if($cita->estado != 'completada' && $cita->estado != 'cancelada')
+                                @if(!in_array($cita->estado, ['completada', 'cancelada', 'desercion']))
                                 <form method="POST" action="{{ route('admin.citas.estado', $cita->id) }}">
                                     @csrf
                                     <input type="hidden" name="estado" value="completada">
@@ -51,6 +51,10 @@
                                     @csrf
                                     <input type="hidden" name="estado" value="cancelada">
                                     <button type="submit" class="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">✖ Cancelar</button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.citas.desercion', $cita->id) }}" onsubmit="return confirm('¿Registrar esta cita como deserción y solicitar el motivo al paciente?')">
+                                    @csrf
+                                    <button type="submit" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded">⚑ Registrar deserción</button>
                                 </form>
                                 @endif
                             </div>

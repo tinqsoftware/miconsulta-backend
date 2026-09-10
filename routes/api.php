@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\Api\RecordatorioController;
 use App\Http\Controllers\Api\V1\ConfiguracionApiController;
 use App\Http\Controllers\Api\V1\EvaluacionAtencionController;
+use App\Http\Controllers\Api\V1\DesercionAtencionController;
+use App\Http\Controllers\Api\V1\ValidacionCelularController;
 
 Route::prefix('v1')->group(function () {
     // Auth (Públicas)
@@ -37,9 +39,11 @@ Route::prefix('v1')->group(function () {
         });
 
         // Citas
+        Route::get('/especialidades/disponibles', [CitaController::class, 'especialidadesDisponibles']);
         Route::get('/citas/horarios', [CitaController::class, 'getHorarios']);
         Route::post('/citas', [CitaController::class, 'crearCita']);
         Route::get('/citas/mis-citas', [CitaController::class, 'misCitas']);
+        Route::get('/citas/atenciones-realizadas', [CitaController::class, 'atencionesRealizadas']);
 
         // Recetas
         Route::get('/recetas/mis-recetas', [RecetaController::class, 'misRecetas']);
@@ -64,8 +68,12 @@ Route::prefix('v1')->group(function () {
         // Evaluación de la atención médica
         Route::get('/evaluaciones/citas/{cita}', [EvaluacionAtencionController::class, 'show']);
         Route::post('/evaluaciones/citas/{cita}', [EvaluacionAtencionController::class, 'store']);
+        Route::get('/deserciones/citas/{cita}', [DesercionAtencionController::class, 'show']);
+        Route::post('/deserciones/citas/{cita}', [DesercionAtencionController::class, 'store']);
 
         // Perfil
         Route::get('/perfil', [PerfilController::class, 'miPerfil']);
+        Route::post('/perfil/celular/solicitar-validacion', [ValidacionCelularController::class, 'solicitar']);
+        Route::post('/perfil/celular/confirmar-validacion', [ValidacionCelularController::class, 'confirmar']);
     });
 });

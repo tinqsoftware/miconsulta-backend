@@ -44,4 +44,9 @@ class Cita extends Model
     {
         return $this->hasOne(EvaluacionAtencion::class, 'id_cita');
     }
+
+    public function desercionAtencion()
+    {
+        return $this->hasOne(DesercionAtencion::class, 'id_cita');
+    }
 }

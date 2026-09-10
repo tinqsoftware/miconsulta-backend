@@ -30,7 +30,7 @@
                 @forelse($banners as $banner)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <img src="{{ $banner->imagen_url }}" alt="Banner" class="h-16 w-auto object-cover rounded border">
+                        <img src="{{ $banner->imagen_url }}" alt="Banner" class="h-14 w-40 object-cover rounded border shadow-md">
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ $banner->titulo }}
@@ -59,6 +59,11 @@
                             <button type="submit" class="text-{{ $banner->estado ? 'red' : 'green' }}-600 hover:text-{{ $banner->estado ? 'red' : 'green' }}-900">
                                 {{ $banner->estado ? 'Desactivar' : 'Activar' }}
                             </button>
+                        </form>
+                        <form action="{{ route('admin.banners.destroy', $banner->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar este banner?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="ml-3 text-red-600 hover:text-red-900">Eliminar</button>
                         </form>
                     </td>
                 </tr>

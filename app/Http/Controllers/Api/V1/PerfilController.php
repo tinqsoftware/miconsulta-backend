@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\ValidacionCelular;
 use Illuminate\Http\Request;
 
 class PerfilController extends Controller
@@ -11,6 +12,7 @@ class PerfilController extends Controller
     {
         $usuario = $request->user();
         $paciente = $usuario->paciente()->with('ipress')->first();
+        $validacion = ValidacionCelular::where('id_usuario', $usuario->id)->first();
 
         if (!$paciente) {
             return response()->json(['message' => 'Paciente no encontrado'], 404);
@@ -28,6 +30,7 @@ class PerfilController extends Controller
                 'fecha_nacimiento' => $paciente->fecha_nacimiento,
                 'tipo_seguro' => $paciente->tipo_seguro,
                 'celular' => $paciente->celular,
+                'celular_validado' => (bool) $validacion?->verificado_at,
                 'direccion' => $paciente->direccion . ', ' . $paciente->distrito,
             ],
             'ipress' => $paciente->ipress ? [

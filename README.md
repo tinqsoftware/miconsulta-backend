@@ -7,6 +7,39 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Notificaciones de atención y Robot Call
+
+Las evaluaciones de atención, deserciones y validación de celular requieren las
+migraciones de este proyecto:
+
+```bash
+php artisan migrate --force
+```
+
+El push FCM se activa con una cuenta de servicio de Firebase almacenada fuera
+del repositorio:
+
+```dotenv
+FIREBASE_CREDENTIALS=/ruta/segura/firebase-service-account.json
+```
+
+El Robot Call de CENATE es opcional y se mantiene apagado hasta tener una URL y
+un token de un usuario administrador autorizado del servicio. Nunca habilitarlo
+en un entorno local por defecto:
+
+```dotenv
+ROBOT_CALL_ENABLED=true
+ROBOT_CALL_URL=https://servidor-robot/api/softphone/robot-call
+ROBOT_CALL_TOKEN=token-autorizado-del-servicio
+ROBOT_CALL_TARGET_NUMBER=953761235
+```
+
+Con la configuración anterior, al marcar una atención como atendida o una cita
+como deserción se conserva la notificación interna, se intenta el push FCM y se
+solicita la llamada automática. La validación de celular permite al paciente
+elegir entre push y llamada; el código se guarda únicamente como hash y vence a
+los diez minutos.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

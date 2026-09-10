@@ -9,14 +9,51 @@ use Carbon\Carbon;
 use App\Models\Cita;
 use App\Models\HorarioDisponible;
 use App\Models\Profesional;
+use App\Models\Especialidad;
+use App\Services\AtencionCompletadaService;
 
 class CitaController extends Controller
 {
+    private const ESPECIALIDADES_VIRTUALES = [
+        'Medicina General' => 'medical_services',
+        'Medicina Familiar' => 'family_restroom',
+        'Psicología' => 'psychology',
+        'Nutrición' => 'nutrition',
+    ];
+
+    public function especialidadesDisponibles()
+    {
+        $especialidades = Especialidad::query()
+            ->whereIn('nombre', array_keys(self::ESPECIALIDADES_VIRTUALES))
+            ->where('esta_activa', true)
+            ->get()
+            ->sortBy(fn (Especialidad $especialidad) => array_search(
+                $especialidad->nombre,
+                array_keys(self::ESPECIALIDADES_VIRTUALES),
+                true
+            ))
+            ->values()
+            ->map(function (Especialidad $especialidad) {
+                return [
+                    'id' => $especialidad->id,
+                    'nombre' => $especialidad->nombre,
+                    'icono' => self::ESPECIALIDADES_VIRTUALES[$especialidad->nombre],
+                    'tiene_profesionales' => Profesional::query()
+                        ->where('esta_activo', true)
+                        ->where('id_especialidad', $especialidad->id)
+                        ->exists(),
+                ];
+            });
+
+        return response()->json(['data' => $especialidades]);
+    }
+
     public function getHorarios(Request $request)
     {
         $request->validate([
             'tipo_cita' => 'required|in:presencial,telemedicina',
-            'fecha' => 'nullable|date'
+            'fecha' => 'nullable|date',
+            'id_especialidad' => 'nullable|integer|exists:especialidades,id',
         ]);
 
         $paciente = $request->user()->paciente;
@@ -32,7 +69,13 @@ class CitaController extends Controller
             return response()->json(['message' => 'Solo se pueden consultar horarios desde hoy.'], 422);
         }
 
-        $this->generarAgendaDiaria($fecha, $request->tipo_cita, $paciente->id_ipress_asignada);
+        $idEspecialidad = $request->integer('id_especialidad') ?: null;
+        $this->generarAgendaDiaria(
+            $fecha,
+            $request->tipo_cita,
+            $paciente->id_ipress_asignada,
+            $idEspecialidad
+        );
 
         $query = HorarioDisponible::with(['profesional', 'especialidad', 'ipress'])
             ->where('tipo_cita', $request->tipo_cita)
@@ -42,6 +85,9 @@ class CitaController extends Controller
 
         if ($paciente->id_ipress_asignada) {
             $query->where('id_ipress', $paciente->id_ipress_asignada);
+        }
+        if ($idEspecialidad) {
+            $query->where('id_especialidad', $idEspecialidad);
         }
 
         // El paciente solo puede reservar con una hora completa de anticipación.
@@ -146,7 +192,7 @@ class CitaController extends Controller
         })->values();
 
         $pendientes_o_pasadas = $citas->filter(function ($cita) use ($hoy) {
-            return $cita->fecha < $hoy || in_array($cita->estado, ['pendiente_programacion', 'completada', 'cancelada', 'no_asistio']);
+            return $cita->fecha < $hoy || in_array($cita->estado, ['pendiente_programacion', 'completada', 'cancelada', 'no_asistio', 'desercion']);
         })->values();
 
         return response()->json([
@@ -155,7 +201,65 @@ class CitaController extends Controller
         ]);
     }
 
-    private function generarAgendaDiaria(Carbon $fecha, string $tipoCita, ?int $idIpress): void
+    public function atencionesRealizadas(Request $request)
+    {
+        $paciente = $request->user()->paciente;
+        if (!$paciente) {
+            return response()->json(['data' => []]);
+        }
+
+        $citas = Cita::with([
+            'profesional',
+            'especialidad',
+            'ipress',
+            'evaluacionAtencion',
+            'desercionAtencion',
+        ])
+            ->where('id_paciente', $paciente->id)
+            ->whereIn('estado', ['completada', 'desercion'])
+            ->orderByDesc('fecha')
+            ->orderByDesc('hora')
+            ->get();
+
+        $evaluaciones = app(AtencionCompletadaService::class);
+
+        return response()->json([
+            'data' => $citas->map(function (Cita $cita) use ($evaluaciones) {
+                $evaluacion = $cita->evaluacionAtencion;
+                if ($cita->estado === 'completada' && !$evaluacion) {
+                    $evaluacion = $evaluaciones->obtenerOCrearEvaluacion($cita);
+                }
+
+                $desercion = $cita->desercionAtencion;
+
+                return [
+                    'id' => $cita->id,
+                    'estado' => $cita->estado,
+                    'fecha' => $cita->fecha,
+                    'hora' => $cita->hora,
+                    'tipo_cita' => $cita->tipo_cita,
+                    'profesional' => $cita->profesional,
+                    'especialidad' => $cita->especialidad,
+                    'ipress' => $cita->ipress,
+                    'evaluacion' => $evaluacion ? [
+                        'token' => $evaluacion->token_acceso,
+                        'enviada' => (bool) $evaluacion->enviada_at,
+                    ] : null,
+                    'desercion' => $desercion ? [
+                        'token' => $desercion->token_acceso,
+                        'enviada' => (bool) $desercion->enviada_at,
+                    ] : null,
+                ];
+            })->values(),
+        ]);
+    }
+
+    private function generarAgendaDiaria(
+        Carbon $fecha,
+        string $tipoCita,
+        ?int $idIpress,
+        ?int $idEspecialidad = null
+    ): void
     {
         $profesionales = Profesional::query()
             ->where('esta_activo', true)
@@ -164,6 +268,9 @@ class CitaController extends Controller
 
         if ($idIpress) {
             $profesionales->where('id_ipress', $idIpress);
+        }
+        if ($idEspecialidad) {
+            $profesionales->where('id_especialidad', $idEspecialidad);
         }
 
         $profesionales->get()->each(function (Profesional $profesional) use ($fecha, $tipoCita) {

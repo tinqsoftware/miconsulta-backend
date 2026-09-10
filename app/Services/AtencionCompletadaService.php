@@ -21,7 +21,7 @@ class AtencionCompletadaService
         $mensaje = 'Cuéntanos cómo fue tu atención con ' . ($profesional ?: 'tu profesional de salud') . '.';
         $ruta = '/evaluacion/' . $cita->id . '?token=' . $evaluacion->token_acceso;
 
-        Notificacion::firstOrCreate(
+        $notificacion = Notificacion::firstOrCreate(
             [
                 'id_paciente' => $cita->id_paciente,
                 'tipo' => 'evaluacion_atencion',
@@ -41,13 +41,17 @@ class AtencionCompletadaService
             ]
         );
 
-        $tokenFcm = $cita->paciente?->usuario?->token_fcm;
-        if ($tokenFcm) {
-            app(FirebaseMessagingService::class)->send($tokenFcm, $titulo, $mensaje, [
-                'ruta' => $ruta,
-                'cita_id' => $cita->id,
-                'token' => $evaluacion->token_acceso,
-            ]);
+        if ($notificacion->wasRecentlyCreated) {
+            $tokenFcm = $cita->paciente?->usuario?->token_fcm;
+            if ($tokenFcm) {
+                app(FirebaseMessagingService::class)->send($tokenFcm, $titulo, $mensaje, [
+                    'ruta' => $ruta,
+                    'cita_id' => $cita->id,
+                    'token' => $evaluacion->token_acceso,
+                ]);
+            }
+
+            app(RobotCallService::class)->encuesta();
         }
 
         return $evaluacion;

@@ -10,11 +10,18 @@ class EvaluacionAtencion extends Model
 
     protected $fillable = [
         'id_cita', 'id_paciente', 'id_profesional', 'token_acceso',
-        'puntuacion', 'comentario', 'enviada_at',
+        'puntuacion', 'conexion_puntualidad', 'escucha_trato',
+        'explicacion_diagnostico', 'explicacion_tratamiento',
+        'claridad_proximos_pasos', 'comentario', 'enviada_at',
     ];
 
     protected $casts = [
         'puntuacion' => 'decimal:1',
+        'conexion_puntualidad' => 'integer',
+        'escucha_trato' => 'integer',
+        'explicacion_diagnostico' => 'integer',
+        'explicacion_tratamiento' => 'integer',
+        'claridad_proximos_pasos' => 'integer',
         'enviada_at' => 'datetime',
     ];
 

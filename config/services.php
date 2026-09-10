@@ -41,4 +41,13 @@ return [
         'credentials' => env('FIREBASE_CREDENTIALS'),
     ],
 
+    'robot_call' => [
+        'enabled' => env('ROBOT_CALL_ENABLED', false),
+        // Ejemplo: https://robot.cenate.pe/api/softphone/robot-call
+        'url' => env('ROBOT_CALL_URL'),
+        'token' => env('ROBOT_CALL_TOKEN'),
+        // Número de prueba o de operación autorizado, configurado solo en VPS.
+        'target_number' => env('ROBOT_CALL_TARGET_NUMBER', '953761235'),
+    ],
+
 ];

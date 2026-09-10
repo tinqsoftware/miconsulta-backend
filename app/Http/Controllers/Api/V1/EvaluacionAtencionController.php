@@ -29,19 +29,24 @@ class EvaluacionAtencionController extends Controller
 
         $validator = Validator::make($request->all(), [
             'token' => 'required|string',
-            'puntuacion' => 'required|numeric|between:0.5,5',
+            'conexion_puntualidad' => 'required|integer|between:1,5',
+            'escucha_trato' => 'required|integer|between:1,5',
+            'explicacion_diagnostico' => 'required|integer|between:1,5',
+            'explicacion_tratamiento' => 'required|integer|between:1,5',
+            'claridad_proximos_pasos' => 'required|integer|between:1,5',
             'comentario' => 'nullable|string|max:1000',
         ]);
-        $validator->after(function ($validator) use ($request) {
-            $puntuacion = (float) $request->input('puntuacion');
-            if (abs(($puntuacion * 2) - round($puntuacion * 2)) > 0.00001) {
-                $validator->errors()->add('puntuacion', 'La puntuación debe avanzar de 0.5 en 0.5.');
-            }
-        });
         $data = $validator->validate();
 
         $evaluacion->update([
-            'puntuacion' => $data['puntuacion'],
+            // Conservamos la columna histórica como resumen interno. La UI y
+            // las reglas de negocio trabajan exclusivamente con enteros 1-5.
+            'puntuacion' => null,
+            'conexion_puntualidad' => $data['conexion_puntualidad'],
+            'escucha_trato' => $data['escucha_trato'],
+            'explicacion_diagnostico' => $data['explicacion_diagnostico'],
+            'explicacion_tratamiento' => $data['explicacion_tratamiento'],
+            'claridad_proximos_pasos' => $data['claridad_proximos_pasos'],
             'comentario' => $data['comentario'] ?? null,
             'enviada_at' => now(),
         ]);
@@ -79,7 +84,13 @@ class EvaluacionAtencionController extends Controller
             ],
             'evaluacion' => [
                 'enviada' => (bool) $evaluacion->enviada_at,
-                'puntuacion' => $evaluacion->puntuacion,
+                'calificaciones' => [
+                    'conexion_puntualidad' => $evaluacion->conexion_puntualidad,
+                    'escucha_trato' => $evaluacion->escucha_trato,
+                    'explicacion_diagnostico' => $evaluacion->explicacion_diagnostico,
+                    'explicacion_tratamiento' => $evaluacion->explicacion_tratamiento,
+                    'claridad_proximos_pasos' => $evaluacion->claridad_proximos_pasos,
+                ],
                 'comentario' => $evaluacion->comentario,
                 'enviada_at' => $evaluacion->enviada_at?->toIso8601String(),
             ],

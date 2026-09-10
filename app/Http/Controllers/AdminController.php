@@ -15,6 +15,7 @@ use App\Models\Banner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Services\AtencionCompletadaService;
+use App\Services\DesercionAtencionService;
 
 class AdminController extends Controller
 {
@@ -83,6 +84,18 @@ class AdminController extends Controller
         }
 
         return back()->with('error', 'Estado inválido');
+    }
+
+    public function registrarDesercion($id, DesercionAtencionService $deserciones)
+    {
+        $cita = Cita::findOrFail($id);
+        if (in_array($cita->estado, ['completada', 'cancelada', 'desercion'], true)) {
+            return back()->with('error', 'No se puede registrar una deserción para esta cita.');
+        }
+
+        $deserciones->registrar($cita);
+
+        return back()->with('success', 'Deserción registrada y notificación enviada al paciente.');
     }
 
     public function recetas()
@@ -198,6 +211,22 @@ class AdminController extends Controller
         $banner->save();
 
         return redirect()->route('admin.banners')->with('success', 'Banner actualizado correctamente.');
+    }
+
+    public function destroyBanner($id)
+    {
+        $banner = Banner::findOrFail($id);
+        $imagen = $banner->imagen_url;
+        $banner->delete();
+
+        if (is_string($imagen) && str_starts_with($imagen, '/uploads/banners/')) {
+            $ruta = public_path(ltrim($imagen, '/'));
+            if (is_file($ruta)) {
+                @unlink($ruta);
+            }
+        }
+
+        return redirect()->route('admin.banners')->with('success', 'Banner eliminado correctamente.');
     }
 
     public function toggleBannerEstado($id)
