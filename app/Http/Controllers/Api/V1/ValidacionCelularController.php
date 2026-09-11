@@ -45,7 +45,7 @@ class ValidacionCelularController extends Controller
         );
 
         if ($data['canal'] === 'push') {
-            $titulo = 'Código SMS para validar tu celular';
+            $titulo = "{$codigo} - Código SMS para validar tu celular";
             $mensaje = "Te enviamos un SMS con tu código de validación: {$codigo}. Vence en 10 minutos.";
 
             app(FirebaseMessagingService::class)->send($usuario->token_fcm, $titulo, $mensaje, [
