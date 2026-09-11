@@ -12,7 +12,7 @@ class EvaluacionAtencion extends Model
         'id_cita', 'id_paciente', 'id_profesional', 'token_acceso',
         'puntuacion', 'conexion_puntualidad', 'escucha_trato',
         'explicacion_diagnostico', 'explicacion_tratamiento',
-        'claridad_proximos_pasos', 'comentario', 'enviada_at',
+        'claridad_proximos_pasos', 'enviada_at',
     ];
 
     protected $casts = [

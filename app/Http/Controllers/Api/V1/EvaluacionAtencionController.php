@@ -34,7 +34,6 @@ class EvaluacionAtencionController extends Controller
             'explicacion_diagnostico' => 'required|integer|between:1,5',
             'explicacion_tratamiento' => 'required|integer|between:1,5',
             'claridad_proximos_pasos' => 'required|integer|between:1,5',
-            'comentario' => 'nullable|string|max:1000',
         ]);
         $data = $validator->validate();
 
@@ -47,7 +46,6 @@ class EvaluacionAtencionController extends Controller
             'explicacion_diagnostico' => $data['explicacion_diagnostico'],
             'explicacion_tratamiento' => $data['explicacion_tratamiento'],
             'claridad_proximos_pasos' => $data['claridad_proximos_pasos'],
-            'comentario' => $data['comentario'] ?? null,
             'enviada_at' => now(),
         ]);
 
@@ -91,7 +89,6 @@ class EvaluacionAtencionController extends Controller
                     'explicacion_tratamiento' => $evaluacion->explicacion_tratamiento,
                     'claridad_proximos_pasos' => $evaluacion->claridad_proximos_pasos,
                 ],
-                'comentario' => $evaluacion->comentario,
                 'enviada_at' => $evaluacion->enviada_at?->toIso8601String(),
             ],
         ];

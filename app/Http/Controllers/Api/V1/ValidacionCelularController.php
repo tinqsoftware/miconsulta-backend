@@ -27,7 +27,7 @@ class ValidacionCelularController extends Controller
 
         if ($data['canal'] === 'push' && !$usuario->token_fcm) {
             return response()->json([
-                'message' => 'No podemos enviar una notificación push a este dispositivo. Activa las notificaciones e inténtalo otra vez.',
+                'message' => 'No podemos enviar el SMS a este dispositivo. Activa las notificaciones e inténtalo otra vez.',
             ], 422);
         }
 
@@ -45,8 +45,8 @@ class ValidacionCelularController extends Controller
         );
 
         if ($data['canal'] === 'push') {
-            $titulo = 'Código para validar tu celular';
-            $mensaje = "Tu código de validación es {$codigo}. Vence en 10 minutos.";
+            $titulo = 'Código SMS para validar tu celular';
+            $mensaje = "Te enviamos un SMS con tu código de validación: {$codigo}. Vence en 10 minutos.";
 
             app(FirebaseMessagingService::class)->send($usuario->token_fcm, $titulo, $mensaje, [
                 'ruta' => '/perfil',
@@ -69,7 +69,7 @@ class ValidacionCelularController extends Controller
 
         return response()->json([
             'message' => $data['canal'] === 'push'
-                ? 'Enviamos un código de cuatro dígitos por notificación push.'
+                ? 'Te enviamos un SMS con tu código de cuatro dígitos. Vence en 10 minutos.'
                 : 'Solicitamos una llamada automática con tu código de validación.',
             'data' => [
                 'canal' => $validacion->canal,

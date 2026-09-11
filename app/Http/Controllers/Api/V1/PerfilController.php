@@ -40,6 +40,9 @@ class PerfilController extends Controller
                 'longitud' => $paciente->ipress->longitud,
                 'telefono' => $paciente->ipress->telefono,
                 'horario' => $paciente->ipress->horario_atencion,
+                'nivel' => $paciente->ipress->nivel,
+                'tiene_emergencia' => (bool) $paciente->ipress->tiene_emergencia,
+                'servicios' => $paciente->ipress->servicios ?? [],
             ] : null
         ]);
     }

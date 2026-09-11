@@ -11,6 +11,15 @@ class Ipress extends Model
 
     protected $fillable = [
         'codigo_renipress', 'nombre', 'direccion', 'telefono',
-        'nivel', 'latitud', 'longitud', 'horario_atencion', 'esta_activa'
+        'nivel', 'latitud', 'longitud', 'horario_atencion', 'esta_activa',
+        'tiene_emergencia', 'servicios',
+    ];
+
+    protected $casts = [
+        'latitud' => 'float',
+        'longitud' => 'float',
+        'esta_activa' => 'boolean',
+        'tiene_emergencia' => 'boolean',
+        'servicios' => 'array',
     ];
 }
