@@ -23,4 +23,9 @@ class Profesional extends Model
     {
         return $this->belongsTo(Ipress::class, 'id_ipress');
     }
+
+    public function horarios()
+    {
+        return $this->hasMany(HorarioDisponible::class, 'id_profesional');
+    }
 }

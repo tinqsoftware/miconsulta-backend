@@ -48,6 +48,17 @@ return [
         'token' => env('ROBOT_CALL_TOKEN'),
         // Número de prueba o de operación autorizado, configurado solo en VPS.
         'target_number' => env('ROBOT_CALL_TARGET_NUMBER', '953761235'),
+        'bridge_enabled' => env('ROBOT_CALL_BRIDGE_ENABLED', false),
+        'cloud_url' => rtrim((string) env('ROBOT_CALL_CLOUD_URL', ''), '/'),
+        'cloud_token' => env('ROBOT_CALL_CLOUD_TOKEN'),
+        'cenate_url' => rtrim((string) env('ROBOT_CALL_CENATE_URL', 'http://10.0.89.237'), '/'),
+        'cenate_key' => env('ROBOT_CALL_CENATE_KEY'),
+        'test_phone' => env('ROBOT_CALL_TEST_PHONE', '953761235'),
+        'bridge_poll_seconds' => (int) env('ROBOT_CALL_BRIDGE_POLL_SECONDS', 10),
+        'bridge_lease_seconds' => (int) env('ROBOT_CALL_BRIDGE_LEASE_SECONDS', 120),
+        'bridge_max_attempts' => (int) env('ROBOT_CALL_BRIDGE_MAX_ATTEMPTS', 5),
+        // Token exclusivo para el bridge local que consulta el VPS.
+        'bridge_token' => env('ROBOT_CALL_BRIDGE_TOKEN'),
     ],
 
 ];

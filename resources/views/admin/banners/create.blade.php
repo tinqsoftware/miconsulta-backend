@@ -4,7 +4,7 @@
 <div class="bg-white shadow overflow-hidden sm:rounded-lg max-w-3xl mx-auto">
     <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
         <h3 class="text-lg leading-6 font-medium text-gray-900">Crear Nuevo Banner</h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">Sube una imagen para mostrarla en la app móvil.</p>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Sube la imagen rectangular y, opcionalmente, una imagen cuadrada para el popup.</p>
     </div>
 
     <form action="{{ route('admin.banners.store') }}" method="POST" enctype="multipart/form-data" class="px-4 py-5 sm:p-6">
@@ -20,6 +20,12 @@
                 <label for="imagen" class="block text-sm font-medium text-gray-700">Imagen del Banner</label>
                 <input type="file" name="imagen" id="imagen" accept="image/*" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <p class="mt-1 text-xs text-gray-500">Recomendado: 1200x300 px, formatos JPG/PNG.</p>
+            </div>
+
+            <div>
+                <label for="imagen_popup" class="block text-sm font-medium text-gray-700">Imagen cuadrada del popup (Opcional)</label>
+                <input type="file" name="imagen_popup" id="imagen_popup" accept="image/*" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <p class="mt-1 text-xs text-gray-500">Recomendado: 800x800 px, formatos JPG/PNG.</p>
             </div>
 
             <div>

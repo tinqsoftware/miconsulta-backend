@@ -51,7 +51,7 @@ class AtencionCompletadaService
                 ]);
             }
 
-            app(RobotCallService::class)->encuesta();
+            app(RobotCallService::class)->encuesta($cita);
         }
 
         return $evaluacion;

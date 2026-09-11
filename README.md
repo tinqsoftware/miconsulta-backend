@@ -23,22 +23,33 @@ del repositorio:
 FIREBASE_CREDENTIALS=/ruta/segura/firebase-service-account.json
 ```
 
-El Robot Call de CENATE es opcional y se mantiene apagado hasta tener una URL y
-un token de un usuario administrador autorizado del servicio. Nunca habilitarlo
-en un entorno local por defecto:
+El Robot Call de CENATE usa un bridge local: el VPS encola y la laptop, que sí
+ve la red `10.0.89.237`, entrega las llamadas a CENATE. Los secretos se
+configuran únicamente en los entornos correspondientes:
 
 ```dotenv
-ROBOT_CALL_ENABLED=true
-ROBOT_CALL_URL=https://servidor-robot/api/softphone/robot-call
-ROBOT_CALL_TOKEN=token-autorizado-del-servicio
-ROBOT_CALL_TARGET_NUMBER=953761235
+# En MiConsulta VPS: token para que el bridge consulte la cola.
+ROBOT_CALL_BRIDGE_TOKEN=secreto-compartido-con-la-laptop
+
+# En MiConsulta local, además:
+ROBOT_CALL_BRIDGE_ENABLED=true
+ROBOT_CALL_CLOUD_URL=https://miconsulta.tinq.pe
+ROBOT_CALL_CLOUD_TOKEN=secreto-compartido-con-el-vps
+ROBOT_CALL_CENATE_URL=http://10.0.89.237
+ROBOT_CALL_CENATE_KEY=secreto-configurado-en-cenate
+ROBOT_CALL_TEST_PHONE=953761235
 ```
 
-Con la configuración anterior, al marcar una atención como atendida o una cita
-como deserción se conserva la notificación interna, se intenta el push FCM y se
-solicita la llamada automática. La validación de celular permite al paciente
-elegir entre push y llamada; el código se guarda únicamente como hash y vence a
-los diez minutos.
+Ejecuta el bridge desde este backend local con:
+
+```bash
+php artisan robotcall:bridge
+```
+
+La validación de celular permite al paciente elegir SMS o llamada. El código de
+validación se guarda como hash en la validación y cifrado dentro de la cola; la
+llamada expira a los diez minutos. Las encuestas y deserciones también se
+encolan con el celular real del paciente.
 
 ## About Laravel
 

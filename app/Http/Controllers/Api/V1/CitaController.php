@@ -11,6 +11,7 @@ use App\Models\HorarioDisponible;
 use App\Models\Profesional;
 use App\Models\Especialidad;
 use App\Services\AtencionCompletadaService;
+use App\Services\AgendaDemoService;
 
 class CitaController extends Controller
 {
@@ -46,6 +47,127 @@ class CitaController extends Controller
             });
 
         return response()->json(['data' => $especialidades]);
+    }
+
+    public function profesionalesDisponibles(Request $request)
+    {
+        $request->validate([
+            'tipo_cita' => 'required|in:presencial,telemedicina',
+            'id_especialidad' => 'required|integer|exists:especialidades,id',
+        ]);
+
+        $paciente = $request->user()->paciente;
+        if (!$paciente) {
+            return response()->json(['data' => []]);
+        }
+
+        $fechaInicio = now(config('app.timezone'))->startOfDay();
+        app(AgendaDemoService::class)->asegurar(
+            $request->tipo_cita,
+            $paciente->id_ipress_asignada,
+            $request->integer('id_especialidad')
+        );
+
+        $profesionales = Profesional::query()
+            ->with(['especialidad', 'ipress'])
+            ->where('esta_activo', true)
+            ->where('id_especialidad', $request->integer('id_especialidad'))
+            ->whereNotNull('id_ipress')
+            ->when(
+                $paciente->id_ipress_asignada,
+                fn ($query) => $query->where('id_ipress', $paciente->id_ipress_asignada)
+            )
+            ->whereHas('horarios', function ($query) use ($request, $fechaInicio) {
+                $query->where('tipo_cita', $request->tipo_cita)
+                    ->where('esta_disponible', true)
+                    ->whereRaw('cupo_ocupado < cupo_maximo')
+                    ->whereDate('fecha', '>=', $fechaInicio->toDateString());
+            })
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get()
+            ->map(function (Profesional $profesional) {
+                return [
+                    'id' => $profesional->id,
+                    'nombres' => $profesional->nombres,
+                    'apellidos' => $profesional->apellidos,
+                    'especialidad' => $profesional->especialidad?->nombre,
+                    'ipress' => $profesional->ipress?->nombre,
+                ];
+            })
+            ->values();
+
+        return response()->json(['data' => $profesionales]);
+    }
+
+    public function agendaProfesional(Request $request)
+    {
+        $request->validate([
+            'tipo_cita' => 'required|in:presencial,telemedicina',
+            'id_especialidad' => 'required|integer|exists:especialidades,id',
+            'id_profesional' => 'required|integer|exists:profesionales,id',
+        ]);
+
+        $paciente = $request->user()->paciente;
+        if (!$paciente) {
+            return response()->json(['data' => ['fechas' => [], 'horarios' => []]]);
+        }
+
+        $profesional = Profesional::query()
+            ->where('id', $request->integer('id_profesional'))
+            ->where('esta_activo', true)
+            ->where('id_especialidad', $request->integer('id_especialidad'))
+            ->when(
+                $paciente->id_ipress_asignada,
+                fn ($query) => $query->where('id_ipress', $paciente->id_ipress_asignada)
+            )
+            ->first();
+
+        if (!$profesional) {
+            return response()->json(['data' => ['fechas' => [], 'horarios' => []]]);
+        }
+
+        $fechaInicio = now(config('app.timezone'))->startOfDay();
+        $fechaFin = $fechaInicio->copy()->addDays((int) config('citas.dias_agenda_demo', 14));
+        app(AgendaDemoService::class)->asegurar(
+            $request->tipo_cita,
+            $paciente->id_ipress_asignada,
+            $request->integer('id_especialidad')
+        );
+
+        $query = HorarioDisponible::query()
+            ->where('id_profesional', $profesional->id)
+            ->where('id_especialidad', $request->integer('id_especialidad'))
+            ->where('tipo_cita', $request->tipo_cita)
+            ->where('esta_disponible', true)
+            ->whereRaw('cupo_ocupado < cupo_maximo')
+            ->whereBetween('fecha', [$fechaInicio->toDateString(), $fechaFin->toDateString()])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio');
+
+        if ($fechaInicio->isToday()) {
+            $query->where(function ($hours) use ($fechaInicio) {
+                $hours->whereDate('fecha', '>', $fechaInicio->toDateString())
+                    ->orWhere('hora_inicio', '>=', now(config('app.timezone'))->addHour()->format('H:i:s'));
+            });
+        }
+
+        $horarios = $query->get();
+        $horariosData = $horarios->map(function (HorarioDisponible $horario) {
+            return [
+                'id' => $horario->id,
+                'fecha' => (string) $horario->fecha,
+                'hora_inicio' => (string) $horario->hora_inicio,
+                'hora_fin' => (string) $horario->hora_fin,
+            ];
+        })->values();
+
+        return response()->json([
+            'data' => [
+                'fechas' => $horariosData->pluck('fecha')->unique()->values(),
+                'horarios' => $horariosData,
+            ],
+        ]);
     }
 
     public function getHorarios(Request $request)
@@ -189,7 +311,7 @@ class CitaController extends Controller
         
         $proximas = $citas->filter(function ($cita) use ($hoy) {
             return $cita->fecha >= $hoy && in_array($cita->estado, ['programada', 'confirmada']);
-        })->values();
+        })->sortBy(fn ($cita) => $cita->fecha . ' ' . $cita->hora)->values();
 
         $pendientes_o_pasadas = $citas->filter(function ($cita) use ($hoy) {
             return $cita->fecha < $hoy || in_array($cita->estado, ['pendiente_programacion', 'completada', 'cancelada', 'no_asistio', 'desercion']);
@@ -299,4 +421,5 @@ class CitaController extends Controller
             }
         });
     }
+
 }

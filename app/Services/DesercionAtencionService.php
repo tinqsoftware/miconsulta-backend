@@ -58,7 +58,7 @@ class DesercionAtencionService
                 );
             }
 
-            app(RobotCallService::class)->desercion();
+            app(RobotCallService::class)->desercion($cita);
         }
 
         return $desercion;

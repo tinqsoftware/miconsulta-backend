@@ -4,7 +4,7 @@
 <div class="bg-white shadow overflow-hidden sm:rounded-lg max-w-3xl mx-auto">
     <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
         <h3 class="text-lg leading-6 font-medium text-gray-900">Editar Banner</h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">Modifica la información o imagen del banner publicitario.</p>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Modifica la imagen rectangular, el popup cuadrado y el enlace opcional.</p>
     </div>
 
     <form action="{{ route('admin.banners.update', $banner->id) }}" method="POST" enctype="multipart/form-data" class="px-4 py-5 sm:p-6">
@@ -23,6 +23,17 @@
                 </div>
                 <input type="file" name="imagen" id="imagen" accept="image/*" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <p class="mt-1 text-xs text-gray-500">Recomendado: 1200x300 px, formatos JPG/PNG.</p>
+            </div>
+
+            <div>
+                <label for="imagen_popup" class="block text-sm font-medium text-gray-700">Imagen cuadrada del popup (Opcional)</label>
+                @if($banner->imagen_popup_url)
+                    <div class="mt-2 mb-4">
+                        <img src="{{ $banner->imagen_popup_url }}" alt="Popup actual" class="h-40 w-40 object-cover border rounded">
+                    </div>
+                @endif
+                <input type="file" name="imagen_popup" id="imagen_popup" accept="image/*" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <p class="mt-1 text-xs text-gray-500">Déjalo en blanco para mantener el popup actual. Recomendado: 800x800 px.</p>
             </div>
 
             <div>

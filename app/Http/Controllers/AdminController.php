@@ -155,7 +155,8 @@ class AdminController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'link_url' => 'nullable|string'
+            'imagen_popup' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'link_url' => 'nullable|string|max:2048'
         ]);
 
         $banner = new Banner();
@@ -171,7 +172,13 @@ class AdminController extends Controller
             $banner->imagen_url = '/uploads/banners/' . $imageName;
         }
 
-        $banner->link_url = $request->link_url;
+        if ($request->hasFile('imagen_popup')) {
+            $banner->imagen_popup_url = $this->guardarImagenBanner($request->file('imagen_popup'));
+        }
+
+        $banner->link_url = blank($request->input('link_url'))
+            ? null
+            : trim($request->input('link_url'));
         $banner->estado = $request->has('estado') ? true : false;
         $banner->save();
 
@@ -191,12 +198,14 @@ class AdminController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'link_url' => 'nullable|string'
+            'imagen_popup' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'link_url' => 'nullable|string|max:2048'
         ]);
 
         $banner->titulo = $request->titulo;
         
         if ($request->hasFile('imagen')) {
+            $imagenAnterior = $banner->imagen_url;
             $imageName = time().'.'.$request->imagen->extension();  
             $path = public_path('uploads/banners');
             if (!file_exists($path)) {
@@ -204,9 +213,18 @@ class AdminController extends Controller
             }
             $request->imagen->move($path, $imageName);
             $banner->imagen_url = '/uploads/banners/' . $imageName;
+            $this->eliminarImagenBanner($imagenAnterior);
         }
 
-        $banner->link_url = $request->link_url;
+        if ($request->hasFile('imagen_popup')) {
+            $popupAnterior = $banner->imagen_popup_url;
+            $banner->imagen_popup_url = $this->guardarImagenBanner($request->file('imagen_popup'));
+            $this->eliminarImagenBanner($popupAnterior);
+        }
+
+        $banner->link_url = blank($request->input('link_url'))
+            ? null
+            : trim($request->input('link_url'));
         $banner->estado = $request->has('estado') ? true : false;
         $banner->save();
 
@@ -216,14 +234,11 @@ class AdminController extends Controller
     public function destroyBanner($id)
     {
         $banner = Banner::findOrFail($id);
-        $imagen = $banner->imagen_url;
+        $imagenes = [$banner->imagen_url, $banner->imagen_popup_url];
         $banner->delete();
 
-        if (is_string($imagen) && str_starts_with($imagen, '/uploads/banners/')) {
-            $ruta = public_path(ltrim($imagen, '/'));
-            if (is_file($ruta)) {
-                @unlink($ruta);
-            }
+        foreach ($imagenes as $imagen) {
+            $this->eliminarImagenBanner($imagen);
         }
 
         return redirect()->route('admin.banners')->with('success', 'Banner eliminado correctamente.');
@@ -236,5 +251,30 @@ class AdminController extends Controller
         $banner->save();
 
         return back()->with('success', 'El estado del banner ha sido actualizado.');
+    }
+
+    private function guardarImagenBanner($imagen): string
+    {
+        $path = public_path('uploads/banners');
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
+
+        $imageName = (string) Str::uuid() . '.' . $imagen->extension();
+        $imagen->move($path, $imageName);
+
+        return '/uploads/banners/' . $imageName;
+    }
+
+    private function eliminarImagenBanner(?string $imagen): void
+    {
+        if (!is_string($imagen) || !str_starts_with($imagen, '/uploads/banners/')) {
+            return;
+        }
+
+        $ruta = public_path(ltrim($imagen, '/'));
+        if (is_file($ruta)) {
+            @unlink($ruta);
+        }
     }
 }

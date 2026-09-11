@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\EvaluacionAtencionController;
 use App\Http\Controllers\Api\V1\DesercionAtencionController;
 use App\Http\Controllers\Api\V1\ValidacionCelularController;
 use App\Http\Controllers\Api\V1\IpressController;
+use App\Http\Controllers\Api\V1\RobotCallBridgeController;
 
 Route::prefix('v1')->group(function () {
     // Auth (Públicas)
@@ -41,6 +42,8 @@ Route::prefix('v1')->group(function () {
 
         // Citas
         Route::get('/especialidades/disponibles', [CitaController::class, 'especialidadesDisponibles']);
+        Route::get('/citas/profesionales', [CitaController::class, 'profesionalesDisponibles']);
+        Route::get('/citas/agenda', [CitaController::class, 'agendaProfesional']);
         Route::get('/citas/horarios', [CitaController::class, 'getHorarios']);
         Route::post('/citas', [CitaController::class, 'crearCita']);
         Route::get('/citas/mis-citas', [CitaController::class, 'misCitas']);
@@ -77,5 +80,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/ipress/activas', [IpressController::class, 'activas']);
         Route::post('/perfil/celular/solicitar-validacion', [ValidacionCelularController::class, 'solicitar']);
         Route::post('/perfil/celular/confirmar-validacion', [ValidacionCelularController::class, 'confirmar']);
+    });
+
+    // Cola de llamadas para el bridge local. Usa X-Robot-Bridge-Token,
+    // separado de los tokens de pacientes y administradores.
+    Route::prefix('robot-call-bridge')->group(function () {
+        Route::post('/claim', [RobotCallBridgeController::class, 'claim']);
+        Route::post('/result', [RobotCallBridgeController::class, 'result']);
     });
 });

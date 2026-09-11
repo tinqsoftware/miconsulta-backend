@@ -7,10 +7,22 @@ use App\Models\Ipress;
 
 class IpressController extends Controller
 {
+    // Cobertura inicial del mapa: Lima Metropolitana. No sustituye una
+    // clasificación territorial; mientras no exista esa columna usamos las
+    // coordenadas geográficas disponibles.
+    private const LIMA_LATITUD_MIN = -12.55;
+    private const LIMA_LATITUD_MAX = -11.45;
+    private const LIMA_LONGITUD_MIN = -77.60;
+    private const LIMA_LONGITUD_MAX = -76.65;
+
     public function activas()
     {
         $ipress = Ipress::query()
             ->where('esta_activa', true)
+            ->whereNotNull('latitud')
+            ->whereNotNull('longitud')
+            ->whereBetween('latitud', [self::LIMA_LATITUD_MIN, self::LIMA_LATITUD_MAX])
+            ->whereBetween('longitud', [self::LIMA_LONGITUD_MIN, self::LIMA_LONGITUD_MAX])
             ->orderBy('nombre')
             ->get()
             ->map(static function (Ipress $item): array {

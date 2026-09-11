@@ -2,32 +2,42 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\Models\Cita;
 use Illuminate\Support\Facades\Log;
-use Throwable;
 
 /**
- * Adaptador al Robot Call de CENATE.
+ * Productor de trabajos para el Robot Call de CENATE.
  *
- * El servicio de telefonía se mantiene fuera de este proyecto. Por ello esta
- * clase solo se activa cuando el VPS tiene ROBOT_CALL_ENABLED=true y la URL +
- * token del servicio configurados. Así ningún entorno local genera llamadas.
+ * MiConsulta nunca abre la conexión interna de CENATE desde la petición web:
+ * cifra el mensaje y lo deja en la outbox para que el bridge local lo entregue.
  */
 class RobotCallService
 {
-    public function encuesta(): bool
+    public function encuesta(Cita $cita): bool
     {
+        $cita->loadMissing('paciente');
+
         return $this->encolar(
             'Encuesta de satisfacción',
-            'Ingresa a EsSalud Digital para contarnos cómo fue tu atención. Tu opinión nos ayuda a mejorar.'
+            'Ingresa a EsSalud Digital para contarnos cómo fue tu atención. Tu opinión nos ayuda a mejorar.',
+            $cita->paciente?->celular,
+            'encuesta_atencion',
+            'encuesta:' . $cita->id,
+            $this->nombrePaciente($cita),
         );
     }
 
-    public function desercion(): bool
+    public function desercion(Cita $cita): bool
     {
+        $cita->loadMissing('paciente');
+
         return $this->encolar(
             'Registro de deserción',
-            'Ingresa a EsSalud Digital para registrar el motivo por el que no pudiste completar tu atención.'
+            'Ingresa a EsSalud Digital para registrar el motivo por el que no pudiste completar tu atención.',
+            $cita->paciente?->celular,
+            'desercion_atencion',
+            'desercion:' . $cita->id,
+            $this->nombrePaciente($cita),
         );
     }
 
@@ -36,55 +46,51 @@ class RobotCallService
         return $this->encolar(
             'Validación de celular',
             "Tu código de validación de EsSalud Digital es {$codigo}. Repito: {$codigo}.",
-            $celular
+            $celular,
+            'validacion_celular',
+            hash('sha256', 'validacion:' . $celular . ':' . $codigo),
+            'Paciente',
+            now()->addMinutes(10),
         );
     }
 
-    private function encolar(string $name, string $message, ?string $number = null): bool
+    private function encolar(
+        string $name,
+        string $message,
+        ?string $number,
+        string $tipo,
+        string $idempotencyKey,
+        string $patientName,
+        $expiresAt = null,
+    ): bool
     {
-        $enabled = (bool) config('services.robot_call.enabled');
-        $url = config('services.robot_call.url');
-        $number ??= config('services.robot_call.target_number');
-
-        if (!$enabled || !$url || !$number) {
-            Log::info('Robot Call omitido: integración no configurada.', [
-                'event' => $name,
-                'enabled' => $enabled,
-            ]);
+        $normalizedNumber = app(RobotCallOutboxService::class)->normalizePhone((string) $number);
+        if ($normalizedNumber === '') {
+            Log::warning('Robot Call omitido: el paciente no tiene celular válido.', ['event' => $name]);
             return false;
         }
 
-        try {
-            $request = Http::acceptJson()->asJson()->timeout(10);
-            if ($token = config('services.robot_call.token')) {
-                $request = $request->withToken($token);
-            }
-
-            $response = $request->post($url, [
-                // Campos admitidos por el endpoint RobotController de CENATE.
-                'number' => $number,
-                'name' => $name,
+        return (bool) app(RobotCallOutboxService::class)->enqueue(
+            $tipo,
+            $normalizedNumber,
+            [
+                'name' => $patientName,
                 'time' => now()->format('H:i'),
-                // Se envía también para los despliegues del robot que admiten
-                // plantillas dinámicas. Las versiones anteriores lo ignoran.
                 'message' => $message,
-            ]);
+                'tipo' => $tipo,
+            ],
+            $idempotencyKey,
+            $expiresAt,
+        );
+    }
 
-            if ($response->successful()) {
-                return true;
-            }
-
-            Log::warning('Robot Call rechazó la solicitud.', [
-                'event' => $name,
-                'status' => $response->status(),
-            ]);
-        } catch (Throwable $exception) {
-            Log::warning('No se pudo solicitar Robot Call.', [
-                'event' => $name,
-                'error' => $exception->getMessage(),
-            ]);
-        }
-
-        return false;
+    private function nombrePaciente(Cita $cita): string
+    {
+        $paciente = $cita->paciente;
+        return trim(implode(' ', array_filter([
+            $paciente?->nombres,
+            $paciente?->apellido_paterno,
+            $paciente?->apellido_materno,
+        ]))) ?: 'Paciente';
     }
 }

@@ -11,16 +11,13 @@ use Illuminate\Support\Facades\Validator;
 class DesercionAtencionController extends Controller
 {
     private const MOTIVOS = [
-        'no_pude_ingresar' => 'No pude ingresar a la videollamada.',
-        'problemas_conexion' => 'Tuve problemas de conexión a internet.',
-        'profesional_no_ingreso' => 'El profesional no ingresó a la videollamada.',
-        'espera_prolongada' => 'El tiempo de espera fue muy prolongado.',
-        'horario_incompatible' => 'No pude atenderme en el horario programado.',
-        'problema_dispositivo' => 'Tuve problemas con mi celular, cámara o micrófono.',
-        'atencion_otro_centro' => 'Recibí atención en otro establecimiento de salud.',
-        'me_senti_indispuesto' => 'Me sentí indispuesto(a) y no pude continuar.',
-        'privacidad_ambiente' => 'No contaba con un ambiente privado o adecuado.',
-        'otro_motivo' => 'Otro motivo personal.',
+        'empeoramiento_emergencia' => 'Empeoramiento de molestias y atención por emergencia',
+        'conflicto_laboral_academico' => 'Conflicto laboral o académico',
+        'imprevisto_familiar_personal' => 'Imprevisto familiar o personal',
+        'confusion_horario' => 'Confusión con el horario',
+        'problemas_conexion' => 'Problemas de conexión a internet',
+        'dificultad_aplicacion' => 'Dificultad para usar la app',
+        'falla_dispositivo' => 'Falla del dispositivo',
     ];
 
     public function show(Request $request, Cita $cita)

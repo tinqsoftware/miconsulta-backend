@@ -84,6 +84,17 @@ class IpressApiTest extends TestCase
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'nombre' => 'IPRESS fuera de Lima',
+                'nivel' => 'II',
+                'latitud' => -6.77,
+                'longitud' => -79.84,
+                'esta_activa' => true,
+                'tiene_emergencia' => false,
+                'servicios' => json_encode(['Farmacia']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         $response = $this->actingAs($this->usuario(), 'sanctum')

@@ -17,6 +17,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imagen</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Popup</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enlace</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -31,6 +32,13 @@
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <img src="{{ $banner->imagen_url }}" alt="Banner" class="h-14 w-40 object-cover rounded border shadow-md">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        @if($banner->imagen_popup_url)
+                            <img src="{{ $banner->imagen_popup_url }}" alt="Popup" class="h-14 w-14 object-cover rounded border shadow-md">
+                        @else
+                            <span class="text-xs text-gray-400">Sin popup</span>
+                        @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ $banner->titulo }}
@@ -69,7 +77,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                    <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                         No hay banners registrados en el sistema.
                     </td>
                 </tr>

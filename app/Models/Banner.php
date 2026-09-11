@@ -14,6 +14,7 @@ class Banner extends Model
     protected $fillable = [
         'titulo',
         'imagen_url',
+        'imagen_popup_url',
         'link_url',
         'estado'
     ];
