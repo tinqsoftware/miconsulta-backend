@@ -1,0 +1,8 @@
+FROM ghcr.io/tinqsoftware/avatar-ai-pilot:pilot-v2
+
+# Qwen 0.1.1 downloads the speech tokenizer at the `main` revision, then
+# looked up its configuration without that revision.  On a fresh cache this
+# can resolve to a partial snapshot and crash during startup.  Keep both
+# lookups on the same revision.
+RUN sed -i 's/revision=kwargs.pop("revision", None),/revision=kwargs.pop("revision", download_revision),/' \
+    /usr/local/lib/python3.10/dist-packages/qwen_tts/core/models/modeling_qwen3_tts.py

@@ -1,0 +1,6 @@
+# La referencia institucional vive solo dentro de una imagen privada.
+voices/*.mp3
+voices/*.wav
+.env
+__pycache__/
+*.tar

@@ -1,0 +1,7 @@
+# Hotfix de despliegue para el piloto v1 ya publicado.
+# La receta principal (Dockerfile) sigue siendo reproducible desde cero y ya
+# declara matplotlib en requirements.txt. Esta capa permite corregir el nodo
+# de Salad sin volver a descargar toda la pila CUDA en el Mac.
+FROM ghcr.io/tinqsoftware/avatar-ai-pilot:pilot-v1
+
+RUN python3 -m pip install --no-cache-dir matplotlib==3.9.4

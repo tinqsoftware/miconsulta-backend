@@ -1,0 +1,9 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+soundfile==0.13.1
+# whisperx carga módulos de pyannote al iniciar. pyannote declara matplotlib
+# como dependencia opcional, pero la ruta de VAD la importa de forma directa.
+# Debe estar presente en la imagen final para que el proceso no reinicie.
+matplotlib==3.9.4
+whisperx==3.3.1
+qwen-tts==0.1.1

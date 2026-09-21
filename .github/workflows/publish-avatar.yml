@@ -1,0 +1,57 @@
+name: Publish Avatar AI Pilot
+
+on:
+  push:
+    branches:
+      - ops/avatar-pilot-v4
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: avatar-ai-pilot-v4-publish
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: tinqsoftware/avatar-ai-pilot
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish AMD64 image
+        uses: docker/build-push-action@v6
+        with:
+          context: infrastructure/anita-voice
+          file: infrastructure/anita-voice/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v4
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v4-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Verify published AMD64 manifest
+        run: |
+          docker buildx imagetools inspect \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v4 \
+            --format '{{ json .Manifest }}' | grep -q 'amd64'

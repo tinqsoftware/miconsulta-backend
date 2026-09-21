@@ -1,0 +1,17 @@
+services:
+  anita-voice:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    # Únicamente en la red privada compartida con Laravel y Voicebox.
+    ports:
+      - "127.0.0.1:8790:8790"
+    tmpfs:
+      - /dev/shm:size=1g,mode=1777
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
