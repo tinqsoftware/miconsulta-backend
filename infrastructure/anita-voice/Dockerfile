@@ -6,8 +6,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME=/opt/models \
     TRANSFORMERS_CACHE=/opt/models
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-pip ffmpeg ca-certificates libsndfile1 \
+RUN for attempt in 1 2 3 4 5; do \
+        rm -rf /var/lib/apt/lists/*; \
+        if apt-get update \
+            && apt-get install -y --no-install-recommends python3 python3-pip ffmpeg ca-certificates libsndfile1; then \
+            break; \
+        fi; \
+        if [ "$attempt" = 5 ]; then exit 1; fi; \
+        sleep 15; \
+    done \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
