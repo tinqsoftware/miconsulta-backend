@@ -23,7 +23,12 @@ from pydantic import BaseModel, Field
 from qwen_tts import Qwen3TTSModel
 
 ADAPTER_TOKEN = os.environ["ANITA_VOICE_TOKEN"]
-DEVICE = os.environ.get("ANITA_DEVICE", "cuda:0")
+# Qwen usa PyTorch y acepta un índice explícito como ``cuda:0``. WhisperX
+# delega su ASR a CTranslate2, cuya API sólo acepta ``cuda`` (el índice se
+# configura por separado). Mantenerlos separados evita que CTranslate2
+# rechace literalmente ``cuda:0`` al iniciar el contenedor.
+TORCH_DEVICE = os.environ.get("ANITA_DEVICE", "cuda:0")
+WHISPERX_DEVICE = os.environ.get("ANITA_WHISPERX_DEVICE", "cuda")
 REMOTE_QWEN_MODEL = os.environ.get("ANITA_QWEN_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-Base")
 BUNDLED_QWEN_MODEL = Path(
     os.environ.get("ANITA_QWEN_BUNDLED_MODEL", "/opt/anita-models/qwen3-tts")
@@ -80,12 +85,14 @@ async def lifespan(_: FastAPI):
     # flash_attention_2 después de medirlo en la misma GPU de producción.
     tts_model = Qwen3TTSModel.from_pretrained(
         qwen_model_source(),
-        device_map=DEVICE,
+        device_map=TORCH_DEVICE,
         dtype=torch.bfloat16,
         attn_implementation="sdpa",
     )
-    transcriber = whisperx.load_model(ALIGN_MODEL, DEVICE, language="es")
-    align_model, align_metadata = whisperx.load_align_model(language_code="es", device=DEVICE)
+    transcriber = whisperx.load_model(ALIGN_MODEL, WHISPERX_DEVICE, language="es")
+    align_model, align_metadata = whisperx.load_align_model(
+        language_code="es", device=WHISPERX_DEVICE
+    )
     yield
 
 
@@ -132,7 +139,7 @@ def align_words(wav: bytes) -> tuple[list[dict[str, int | str]], int]:
         audio = whisperx.load_audio(str(path))
         result = transcriber.transcribe(audio, batch_size=4, language="es")
         aligned = whisperx.align(
-            result["segments"], align_model, align_metadata, audio, DEVICE,
+            result["segments"], align_model, align_metadata, audio, WHISPERX_DEVICE,
             return_char_alignments=False,
         )
         words = [

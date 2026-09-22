@@ -57,6 +57,9 @@ ANITA_REFERENCE_AUDIO=/app/voices/anita-reference.mp3
 ANITA_REFERENCE_TEXT=Qué gusto acompañarte mientras llega tu cita de Medicina General.
 ```
 
+No crees una variable adicional para WhisperX: la imagen usa automáticamente
+`cuda` para CTranslate2 y conserva `cuda:0` sólo para Qwen/PyTorch.
+
 En **Networking**, expón el puerto `8790` como HTTP. Copia la URL HTTPS que
 Salad muestra al terminar: esa URL es solo para el backend Laravel, nunca para
 la app Flutter.
