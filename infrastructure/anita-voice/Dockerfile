@@ -20,7 +20,7 @@ RUN for attempt in 1 2 3 4 5; do \
 WORKDIR /app
 COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu124 torch==2.6.0 torchaudio==2.6.0 \
+    && python3 -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1 torchaudio==2.5.1 \
     && python3 -m pip install --no-cache-dir -r requirements.txt
 
 COPY download_qwen_model.py .
