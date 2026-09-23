@@ -11,7 +11,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: avatar-ai-pilot-v4-publish
+  group: avatar-ai-pilot-v5-publish
   cancel-in-progress: false
 
 env:
@@ -44,8 +44,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v4
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v4-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v5
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v5-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -53,5 +53,5 @@ jobs:
       - name: Verify published AMD64 manifest
         run: |
           docker buildx imagetools inspect \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v4 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pilot-v5 \
             --format '{{ json .Manifest }}' | grep -q 'amd64'
