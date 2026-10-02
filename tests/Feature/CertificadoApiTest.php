@@ -1,0 +1,70 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Paciente;
+use App\Models\Usuario;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+class CertificadoApiTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.database' => ':memory:',
+            'certificates.enabled' => true,
+            'certificates.disk' => 'certificates',
+            'certificates.filename_pattern' => '{dni}.pdf',
+        ]);
+        DB::purge('sqlite');
+
+        Schema::create('usuarios', function (Blueprint $table): void {
+            $table->id();
+            $table->string('dni')->unique();
+            $table->string('contrasena');
+            $table->string('correo')->nullable();
+            $table->boolean('esta_activo')->default(true);
+            $table->timestamps();
+        });
+        Schema::create('pacientes', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('id_usuario');
+            $table->string('nombres');
+            $table->timestamps();
+        });
+    }
+
+    public function test_authenticated_patient_can_view_only_own_certificate(): void
+    {
+        Storage::fake('certificates');
+        Storage::disk('certificates')->put('12345678.pdf', '%PDF-1.4 certificate');
+        Storage::disk('certificates')->put('87654321.pdf', '%PDF-1.4 another-patient');
+
+        $usuario = Usuario::create([
+            'dni' => '12345678',
+            'contrasena' => 'not-used-in-this-test',
+            'esta_activo' => true,
+        ]);
+        Paciente::create(['id_usuario' => $usuario->id, 'nombres' => 'Paciente']);
+
+        $response = $this->actingAs($usuario, 'sanctum')
+            ->get('/api/v1/certificados/discapacidad');
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+        $response->assertHeader('content-disposition', 'inline; filename="certificado-discapacidad.pdf"');
+        $this->assertSame('%PDF-1.4 certificate', $response->streamedContent());
+    }
+
+    public function test_certificate_requires_authentication(): void
+    {
+        $this->getJson('/api/v1/certificados/discapacidad')->assertUnauthorized();
+    }
+}

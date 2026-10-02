@@ -47,6 +47,23 @@ return [
             'report' => false,
         ],
 
+        /*
+        |------------------------------------------------------------------
+        | Certificados de discapacidad
+        |------------------------------------------------------------------
+        |
+        | Este disco apunta a un volumen montado de solo lectura desde el
+        | file server institucional. No se publica con `storage:link`: todos
+        | los documentos se entregan mediante una ruta autenticada de la API.
+        |
+        */
+        'certificates' => [
+            'driver' => 'local',
+            'root' => env('CERTIFICATES_ROOT', '/mnt/certificates'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\DesercionAtencionController;
 use App\Http\Controllers\Api\V1\ValidacionCelularController;
 use App\Http\Controllers\Api\V1\IpressController;
 use App\Http\Controllers\Api\V1\RobotCallBridgeController;
+use App\Http\Controllers\Api\V1\CertificadoController;
 
 Route::prefix('v1')->group(function () {
     // Auth (Públicas)
@@ -77,6 +78,7 @@ Route::prefix('v1')->group(function () {
 
         // Perfil
         Route::get('/perfil', [PerfilController::class, 'miPerfil']);
+        Route::get('/certificados/discapacidad', [CertificadoController::class, 'show']);
         Route::get('/ipress/activas', [IpressController::class, 'activas']);
         Route::post('/perfil/celular/solicitar-validacion', [ValidacionCelularController::class, 'solicitar']);
         Route::post('/perfil/celular/confirmar-validacion', [ValidacionCelularController::class, 'confirmar']);

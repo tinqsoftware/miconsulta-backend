@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.prototype
+    restart: unless-stopped
+    env_file:
+      - .env.prototype
+    ports:
+      - "443:443"
+    volumes:
+      - app_storage:/var/www/html/storage
+      # El administrador monta aquí la carpeta de certificados con permisos de solo lectura.
+      - /ruta/host/certificados:/mnt/certificates:ro
+      # Certificado TLS confiable por los celulares de prueba.
+      - /ruta/host/tls:/etc/nginx/tls:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app_internal
+
+  database:
+    image: mysql:8.0
+    restart: unless-stopped
+    env_file:
+      - .env.prototype
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=-05:00
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Reemplazar este archivo por un respaldo actualizado antes del primer arranque.
+      - ./database/miconsulta-production.sql:/docker-entrypoint-initdb.d/001-miconsulta.sql:ro
+    networks:
+      - app_internal
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  app_storage:
+  mysql_data:
+
+networks:
+  app_internal:
+    driver: bridge
