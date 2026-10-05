@@ -6,6 +6,7 @@ use App\Models\Paciente;
 use App\Models\Usuario;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -115,6 +116,52 @@ class CertificadoApiTest extends TestCase
             return $request->url() === 'http://telecert.test/api/telecertificacion/certificados?dni=12345678'
                 && $request->hasHeader('Authorization', 'Bearer internal-token');
         });
+    }
+
+    public function test_telecertificacion_uses_its_service_credentials_when_no_static_token_is_configured(): void
+    {
+        config([
+            'cache.default' => 'array',
+            'certificates.provider' => 'telecertificacion',
+            'certificates.telecertificacion.base_url' => 'http://telecert.test',
+            'certificates.telecertificacion.token' => '',
+            'certificates.telecertificacion.username' => 'service-user',
+            'certificates.telecertificacion.password' => 'service-password',
+            'certificates.telecertificacion.token_cache_seconds' => 1200,
+        ]);
+        Cache::flush();
+        Http::fake([
+            'http://telecert.test/api/auth/login' => Http::response(['token' => 'renewable-token']),
+            'http://telecert.test/api/telecertificacion/certificados*' => Http::response([
+                [
+                    'dni_paciente' => '12345678',
+                    'activo' => true,
+                    'fecha_termino' => now()->addYear()->toDateString(),
+                    'url_archivo' => '/api/files/certificados/12345678.pdf',
+                    'nombre_archivo' => '12345678.pdf',
+                ],
+            ]),
+            'http://telecert.test/api/files/certificados/12345678.pdf' => Http::response('%PDF-1.4 certificate'),
+        ]);
+
+        $usuario = Usuario::create([
+            'dni' => '12345678',
+            'contrasena' => 'not-used-in-this-test',
+            'esta_activo' => true,
+        ]);
+        Paciente::create(['id_usuario' => $usuario->id, 'nombres' => 'Paciente']);
+
+        $this->actingAs($usuario, 'sanctum')
+            ->get('/api/v1/certificados/discapacidad')
+            ->assertOk();
+
+        Http::assertSent(function ($request): bool {
+            return $request->url() === 'http://telecert.test/api/auth/login'
+                && $request['username'] === 'service-user'
+                && $request['password'] === 'service-password';
+        });
+        Http::assertSent(fn ($request): bool => $request->url() === 'http://telecert.test/api/telecertificacion/certificados?dni=12345678'
+            && $request->hasHeader('Authorization', 'Bearer renewable-token'));
     }
 
     public function test_authenticated_patient_receives_a_temporary_signed_pdf_link(): void

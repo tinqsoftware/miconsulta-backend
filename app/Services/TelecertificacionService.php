@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -19,6 +20,12 @@ class TelecertificacionService
         $response = $this->client()
             ->acceptJson()
             ->get('/api/telecertificacion/certificados', ['dni' => $dni]);
+
+        if ($response->status() === 401 && $this->usesCredentialLogin()) {
+            $response = $this->client(refreshToken: true)
+                ->acceptJson()
+                ->get('/api/telecertificacion/certificados', ['dni' => $dni]);
+        }
 
         if ($response->status() === 404) {
             return null;
@@ -51,6 +58,10 @@ class TelecertificacionService
     public function download(string $url): string
     {
         $response = $this->client()->get($url);
+
+        if ($response->status() === 401 && $this->usesCredentialLogin()) {
+            $response = $this->client(refreshToken: true)->get($url);
+        }
         $response->throw();
 
         $body = $response->body();
@@ -62,10 +73,10 @@ class TelecertificacionService
         return $body;
     }
 
-    private function client(): PendingRequest
+    private function client(bool $refreshToken = false): PendingRequest
     {
         $baseUrl = (string) config('certificates.telecertificacion.base_url');
-        $token = (string) config('certificates.telecertificacion.token');
+        $token = $this->token($refreshToken);
 
         if ($baseUrl === '' || $token === '') {
             throw new RuntimeException('Telecertificación no está configurada.');
@@ -77,6 +88,60 @@ class TelecertificacionService
             ->retry(2, 200, function ($exception): bool {
                 return $exception instanceof ConnectionException;
             });
+    }
+
+    private function token(bool $refresh = false): string
+    {
+        $token = trim((string) config('certificates.telecertificacion.token'));
+        if ($token !== '') {
+            return $token;
+        }
+
+        $username = trim((string) config('certificates.telecertificacion.username'));
+        $password = (string) config('certificates.telecertificacion.password');
+        if ($username === '' || $password === '') {
+            return '';
+        }
+
+        if ($refresh) {
+            Cache::forget($this->tokenCacheKey());
+        }
+
+        return Cache::remember($this->tokenCacheKey(), now()->addSeconds($this->tokenCacheSeconds()), function () use ($username, $password): string {
+            $response = Http::baseUrl((string) config('certificates.telecertificacion.base_url'))
+                ->acceptJson()
+                ->timeout((int) config('certificates.telecertificacion.timeout_seconds'))
+                ->retry(2, 200, fn ($exception): bool => $exception instanceof ConnectionException)
+                ->post('/api/auth/login', [
+                    'username' => $username,
+                    'password' => $password,
+                ]);
+
+            $response->throw();
+            $token = $response->json('token');
+            if (! is_string($token) || trim($token) === '') {
+                throw new RuntimeException('Telecertificación no devolvió un token de acceso válido.');
+            }
+
+            return $token;
+        });
+    }
+
+    private function usesCredentialLogin(): bool
+    {
+        return trim((string) config('certificates.telecertificacion.token')) === ''
+            && trim((string) config('certificates.telecertificacion.username')) !== ''
+            && (string) config('certificates.telecertificacion.password') !== '';
+    }
+
+    private function tokenCacheKey(): string
+    {
+        return 'telecertificacion.access-token.' . sha1((string) config('certificates.telecertificacion.base_url') . '|' . (string) config('certificates.telecertificacion.username'));
+    }
+
+    private function tokenCacheSeconds(): int
+    {
+        return max(60, (int) config('certificates.telecertificacion.token_cache_seconds'));
     }
 
     private function isCurrent(mixed $expiresAt): bool
