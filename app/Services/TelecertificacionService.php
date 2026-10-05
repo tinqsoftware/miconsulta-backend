@@ -28,7 +28,10 @@ class TelecertificacionService
         $items = Arr::wrap($response->json('data', $response->json()));
 
         foreach ($items as $item) {
-            if (! is_array($item) || ! ($item['activo'] ?? false) || ! isset($item['url_archivo'])) {
+            if (! is_array($item)
+                || ! $this->matchesDni($item['dni_paciente'] ?? null, $dni)
+                || ! ($item['activo'] ?? false)
+                || ! isset($item['url_archivo'])) {
                 continue;
             }
 
@@ -99,7 +102,9 @@ class TelecertificacionService
             return rtrim($baseUrl, '/') . '/' . ltrim($url, '/');
         }
 
-        if (($candidate['scheme'] ?? '') !== ($base['scheme'] ?? '') || ($candidate['host'] ?? '') !== ($base['host'] ?? '')) {
+        if (($candidate['scheme'] ?? '') !== ($base['scheme'] ?? '')
+            || ($candidate['host'] ?? '') !== ($base['host'] ?? '')
+            || $this->effectivePort($candidate) !== $this->effectivePort($base)) {
             throw new RuntimeException('Telecertificación devolvió una URL de archivo no permitida.');
         }
 
@@ -113,5 +118,22 @@ class TelecertificacionService
         return str_ends_with(strtolower($filename), '.pdf')
             ? $filename
             : 'certificado-discapacidad.pdf';
+    }
+
+    private function matchesDni(mixed $candidate, string $dni): bool
+    {
+        $normalized = preg_replace('/\\D+/', '', (string) $candidate);
+
+        return is_string($normalized) && hash_equals($dni, $normalized);
+    }
+
+    /** @param array<string, mixed> $url */
+    private function effectivePort(array $url): int
+    {
+        if (isset($url['port'])) {
+            return (int) $url['port'];
+        }
+
+        return ($url['scheme'] ?? '') === 'https' ? 443 : 80;
     }
 }

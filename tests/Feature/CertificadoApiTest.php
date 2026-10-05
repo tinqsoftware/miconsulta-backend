@@ -127,6 +127,7 @@ class CertificadoApiTest extends TestCase
         Http::fake([
             'http://telecert.test/api/telecertificacion/certificados*' => Http::response([
                 [
+                    'dni_paciente' => '12345678',
                     'activo' => true,
                     'fecha_termino' => now()->addYear()->toDateString(),
                     'url_archivo' => '/api/files/certificados/12345678.pdf',
@@ -151,6 +152,45 @@ class CertificadoApiTest extends TestCase
         $this->get($linkResponse->json('data.url'))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_telecertificacion_ignores_a_certificate_for_another_dni(): void
+    {
+        config([
+            'certificates.provider' => 'telecertificacion',
+            'certificates.telecertificacion.base_url' => 'http://telecert.test',
+            'certificates.telecertificacion.token' => 'internal-token',
+        ]);
+        Http::fake([
+            'http://telecert.test/api/telecertificacion/certificados*' => Http::response([
+                [
+                    'dni_paciente' => '87654321',
+                    'activo' => true,
+                    'fecha_termino' => now()->addYear()->toDateString(),
+                    'url_archivo' => '/api/files/certificados/other-patient.pdf',
+                ],
+                [
+                    'dni_paciente' => '12345678',
+                    'activo' => true,
+                    'fecha_termino' => now()->addYear()->toDateString(),
+                    'url_archivo' => '/api/files/certificados/12345678.pdf',
+                    'nombre_archivo' => '12345678.pdf',
+                ],
+            ]),
+            'http://telecert.test/api/files/certificados/12345678.pdf' => Http::response('%PDF-1.4 certificate'),
+        ]);
+
+        $usuario = Usuario::create([
+            'dni' => '12345678',
+            'contrasena' => 'not-used-in-this-test',
+            'esta_activo' => true,
+        ]);
+        Paciente::create(['id_usuario' => $usuario->id, 'nombres' => 'Paciente']);
+
+        $this->actingAs($usuario, 'sanctum')
+            ->get('/api/v1/certificados/discapacidad')
+            ->assertOk()
+            ->assertHeader('content-disposition', 'inline; filename="12345678.pdf"');
     }
 
     public function test_patient_without_a_certificate_does_not_receive_a_signed_link(): void
