@@ -6,9 +6,11 @@ HTTPS al servicio `app`; MySQL nunca se expone.
 
 ## Datos que infraestructura debe entregar
 
-- Un DNS privado para la API, por ejemplo `api.miconsulta.interno`, accesible
-  desde el Wi-Fi institucional y desde la VPN de los dispositivos de prueba.
-- Certificado TLS confiable para ese DNS: archivos `tls.crt` y `tls.key`.
+- Una IP privada accesible desde el Wi-Fi institucional y desde la VPN de los
+  dispositivos de prueba. Para el prototipo actual es `10.0.89.241`.
+- Un certificado TLS confiable para esa IP, con la IP incluida como SAN:
+  archivos `tls.crt` y `tls.key`. En un iPhone de prueba debe instalarse la CA
+  interna y habilitarse su confianza total antes de abrir la app.
 - La URL interna y el token de la API de Telecertificación. En el entorno
   actual se documentó como `http://host.docker.internal:8080` desde el
   contenedor, pero debe verificarse con infraestructura antes de usarlo.
@@ -40,15 +42,18 @@ El archivo `.env.prototype` no se sube a Git.
 
 ## Publicar Flutter Web
 
-En la máquina que tiene el proyecto Flutter, generar el build con el DNS
-interno de esta API y copiar el resultado al directorio `deploy/web` del
+En la máquina que tiene el proyecto Flutter, generar el build con la IP
+interna de esta API y copiar el resultado al directorio `deploy/web` del
 servidor. El mismo Nginx servirá la web y la API bajo el mismo origen:
 
 ```bash
 cd miconsulta_app
-flutter build web --release --dart-define=API_BASE_URL=https://api.miconsulta.interno/api/v1
+flutter build web --release --dart-define=API_BASE_URL=https://10.0.89.241/api/v1
 rsync -av --delete build/web/ cenate@SERVIDOR:/home/cenate/miconsulta-backend/deploy/web/
 ```
+
+Para Android y TestFlight, usar exactamente el mismo `--dart-define` al
+compilar. No apuntar las builds de prueba al dominio público.
 
 ## Primer arranque
 
@@ -86,8 +91,25 @@ MI_CONSULTA_CONFIRM_IMPORT=YES \
 ## Verificación
 
 ```bash
-curl --cacert /ruta/ca-interna.crt https://api.miconsulta.interno/up
+curl --cacert /ruta/ca-interna.crt https://10.0.89.241/up
 docker compose --env-file .env.prototype -f docker-compose.prototype.yml logs --tail=100 app
+```
+
+Con una CA autofirmada para IP, también se puede verificar desde el servidor:
+
+```bash
+curl --insecure https://127.0.0.1/up
+```
+
+## Actualizar el backend sin tocar la base de datos
+
+Después de recibir cambios desde Git, el administrador puede ejecutar este
+único comando en el servidor. No recrea el contenedor `database`, no borra el
+volumen MySQL ni reemplaza `deploy/web`:
+
+```bash
+cd /home/cenate/miconsulta-backend
+bash deploy/update-prototype.sh
 ```
 
 Desde un celular conectado al Wi-Fi/VPN, la app autenticada debe abrir:
