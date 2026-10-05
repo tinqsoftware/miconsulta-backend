@@ -10,6 +10,8 @@ services:
       - "443:443"
     volumes:
       - app_storage:/var/www/html/storage
+      # Imágenes subidas desde el panel admin. Se conservan entre recreaciones.
+      - banner_uploads:/var/www/html/public/uploads/banners
       # Flutter Web build, generated separately from miconsulta_app.
       - ./web:/var/www/web:ro
       # El administrador monta aquí la carpeta de certificados con permisos de solo lectura.
@@ -44,6 +46,7 @@ services:
 
 volumes:
   app_storage:
+  banner_uploads:
   mysql_data:
 
 networks:
