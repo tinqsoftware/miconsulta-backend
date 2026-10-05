@@ -86,3 +86,21 @@ Authorization: Bearer <token>
 El endpoint no acepta una ruta ni un DNI enviado por el teléfono: usa el DNI
 del usuario autenticado, consulta Telecertificación por ese DNI y devuelve
 solo el PDF activo y vigente de ese paciente.
+
+## Preparar un paciente de demostración
+
+Para cada DNI que tenga un certificado activo en Telecertificación, crear una
+cuenta de prueba en Mi Consulta. Este comando solo se ejecuta dentro del
+contenedor y no expone el DNI ni la contraseña mediante una API:
+
+```bash
+docker compose --env-file .env.prototype -f docker-compose.prototype.yml \
+  exec app php artisan prototype:patient 00000003 \
+  --password='CAMBIAR_POR_CLAVE_TEMPORAL' \
+  --nombres='Paciente' \
+  --apellido-paterno='Demostración'
+```
+
+El DNI de inicio de sesión debe coincidir exactamente con `dni_paciente` en
+Telecertificación. Reemplazar `00000003` por los DNI proporcionados para la
+demostración. No usar datos personales reales como datos semilla.
