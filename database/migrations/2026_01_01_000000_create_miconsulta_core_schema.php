@@ -182,6 +182,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_receta')->index();
             $table->unsignedBigInteger('id_medicamento')->index();
             $table->decimal('cantidad', 10, 2);
+            $table->unsignedInteger('dias')->default(1);
+            $table->unsignedInteger('total_tomas')->default(1);
+            $table->boolean('recordatorios_activados')->default(false);
             $table->string('unidad_formato', 50)->nullable();
             $table->text('indicacion')->nullable();
             $table->boolean('esta_disponible')->default(true);

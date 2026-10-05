@@ -12,9 +12,8 @@ HTTPS al servicio `app`; MySQL nunca se expone.
 - La URL interna y el token de la API de Telecertificación. En el entorno
   actual se documentó como `http://host.docker.internal:8080` desde el
   contenedor, pero debe verificarse con infraestructura antes de usarlo.
-- Un dump actualizado de la base de datos, guardado como
-  `deploy/database/miconsulta-production.sql`. No usar el dump semilla si se
-  requiere mostrar información vigente. Si no se cuenta con un dump, las
+- Opcionalmente, un dump actualizado de la base de datos. No usar un dump
+  semilla si se requiere mostrar información vigente. Sin dump, las
   migraciones del repositorio crean el esquema mínimo reproducible y luego se
   pueden crear pacientes ficticios con `prototype:patient`.
 
@@ -33,8 +32,7 @@ en una máquina segura y copiar el resultado, sin comillas, en `APP_KEY`:
 docker run --rm -it php:8.2-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 ```
 
-Crear la carpeta `deploy/database/` y copiar allí el dump actualizado. Este
-archivo y `.env.prototype` no se suben a Git.
+El archivo `.env.prototype` no se sube a Git.
 
 ## Publicar Flutter Web
 
@@ -66,10 +64,18 @@ docker compose --env-file .env.prototype -f docker-compose.prototype.yml exec ap
 docker compose --env-file .env.prototype -f docker-compose.prototype.yml ps
 ```
 
-La importación del dump ocurre solamente al crear por primera vez el volumen
-`mysql_data`. Para reemplazar datos durante pruebas, primero se toma un backup,
-se detiene el despliegue y se importa explícitamente el nuevo dump; no se debe
-borrar un volumen con información que se necesite conservar.
+Para cargar un dump actualizado, primero se toma un backup y luego se importa
+explícitamente; no se debe borrar un volumen con información que se necesite
+conservar:
+
+```bash
+set -a
+. ./.env.prototype
+set +a
+docker compose --env-file .env.prototype -f docker-compose.prototype.yml \
+  exec -T database mysql -u root -p"$MYSQL_ROOT_PASSWORD" miconsulta_db \
+  < /ruta/segura/miconsulta-production.sql
+```
 
 ## Verificación
 

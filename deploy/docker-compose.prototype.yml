@@ -34,8 +34,6 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=-05:00
     volumes:
       - mysql_data:/var/lib/mysql
-      # Reemplazar este archivo por un respaldo actualizado antes del primer arranque.
-      - ./database/miconsulta-production.sql:/docker-entrypoint-initdb.d/001-miconsulta.sql:ro
     networks:
       - app_internal
     healthcheck:
