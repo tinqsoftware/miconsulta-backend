@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Paciente;
+use App\Models\Ipress;
 use App\Models\Usuario;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,8 @@ class CreateDemoPatientCommand extends Command
         {--password= : Contraseña temporal para iniciar sesión en Mi Consulta}
         {--nombres=Paciente : Nombres de demostración}
         {--apellido-paterno=Demo : Apellido paterno de demostración}
-        {--apellido-materno= : Apellido materno de demostración}';
+        {--apellido-materno= : Apellido materno de demostración}
+        {--ipress-id= : ID de la IPRESS que se asignará al paciente (por defecto, la primera activa)}';
 
     protected $description = 'Crea o actualiza un paciente de demostración vinculado a un DNI de Telecertificación';
 
@@ -36,7 +38,18 @@ class CreateDemoPatientCommand extends Command
             return self::INVALID;
         }
 
-        DB::transaction(function () use ($dni, $password): void {
+        $requestedIpressId = $this->option('ipress-id');
+        $ipress = $requestedIpressId === null
+            ? Ipress::query()->where('esta_activa', true)->orderBy('id')->first()
+            : Ipress::query()->find($requestedIpressId);
+
+        if ($ipress === null) {
+            $this->error('No se encontró una IPRESS activa para asignar al paciente.');
+
+            return self::FAILURE;
+        }
+
+        DB::transaction(function () use ($dni, $password, $ipress): void {
             $usuario = Usuario::firstOrNew(['dni' => $dni]);
             $usuario->fill([
                 'correo' => $usuario->correo ?: "{$dni}@miconsulta.test",
@@ -51,11 +64,12 @@ class CreateDemoPatientCommand extends Command
                     'nombres' => (string) $this->option('nombres'),
                     'apellido_paterno' => (string) $this->option('apellido-paterno'),
                     'apellido_materno' => $this->option('apellido-materno') ?: null,
+                    'id_ipress_asignada' => $ipress->id,
                 ],
             );
         });
 
-        $this->info("Paciente de demostración listo para el DNI {$dni}.");
+        $this->info("Paciente de demostración listo para el DNI {$dni} en {$ipress->nombre}.");
 
         return self::SUCCESS;
     }
