@@ -14,7 +14,9 @@ HTTPS al servicio `app`; MySQL nunca se expone.
   contenedor, pero debe verificarse con infraestructura antes de usarlo.
 - Un dump actualizado de la base de datos, guardado como
   `deploy/database/miconsulta-production.sql`. No usar el dump semilla si se
-  requiere mostrar información vigente.
+  requiere mostrar información vigente. Si no se cuenta con un dump, las
+  migraciones del repositorio crean el esquema mínimo reproducible y luego se
+  pueden crear pacientes ficticios con `prototype:patient`.
 
 ## Preparación segura
 
