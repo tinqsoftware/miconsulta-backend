@@ -69,6 +69,13 @@ class CertificadoApiTest extends TestCase
         $this->getJson('/api/v1/certificados/discapacidad')->assertUnauthorized();
     }
 
+    public function test_certificate_api_returns_json_401_without_an_accept_header(): void
+    {
+        $this->get('/api/v1/certificados/discapacidad')
+            ->assertUnauthorized()
+            ->assertJsonPath('message', 'Unauthenticated.');
+    }
+
     public function test_certificate_is_retrieved_from_telecertificacion_by_authenticated_dni(): void
     {
         config([
