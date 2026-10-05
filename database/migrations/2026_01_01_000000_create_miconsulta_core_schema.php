@@ -16,6 +16,30 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('usuarios')) {
+            // Legacy production dumps contain the clinical core tables but
+            // predate these two application tables. They must exist before
+            // the feature migrations below alter `banners`.
+            if (!Schema::hasTable('banners')) {
+                Schema::create('banners', function (Blueprint $table): void {
+                    $table->id();
+                    $table->string('titulo');
+                    $table->string('imagen_url');
+                    $table->string('link_url')->nullable();
+                    $table->boolean('estado')->default(true);
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('configuraciones')) {
+                Schema::create('configuraciones', function (Blueprint $table): void {
+                    $table->id();
+                    $table->string('clave')->unique();
+                    $table->text('valor')->nullable();
+                    $table->string('descripcion')->nullable();
+                    $table->timestamps();
+                });
+            }
+
             return;
         }
 
