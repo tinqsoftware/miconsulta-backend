@@ -152,4 +152,20 @@ class CertificadoApiTest extends TestCase
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
     }
+
+    public function test_patient_without_a_certificate_does_not_receive_a_signed_link(): void
+    {
+        Storage::fake('certificates');
+
+        $usuario = Usuario::create([
+            'dni' => '12345678',
+            'contrasena' => 'not-used-in-this-test',
+            'esta_activo' => true,
+        ]);
+        Paciente::create(['id_usuario' => $usuario->id, 'nombres' => 'Paciente']);
+
+        $this->actingAs($usuario, 'sanctum')
+            ->getJson('/api/v1/certificados/discapacidad/enlace')
+            ->assertNotFound();
+    }
 }

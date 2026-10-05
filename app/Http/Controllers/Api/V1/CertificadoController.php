@@ -41,6 +41,11 @@ class CertificadoController extends Controller
         $dni = $this->normalizedDni((string) $request->user()->dni);
         abort_if($dni === '', 404);
 
+        // Do not issue a QR/signed URL that will immediately lead to a 404.
+        // This is also what lets the Flutter client distinguish a patient
+        // with an active certificate from one without one.
+        $this->ensureCertificateAvailable($dni, $request->user()->id);
+
         $expiresAt = now()->addMinutes(5);
 
         return response()->json([
@@ -74,6 +79,37 @@ class CertificadoController extends Controller
         }
 
         return $this->showFromFilesystem($dni);
+    }
+
+    /**
+     * Confirms the certificate exists before we generate a browser-facing
+     * signed URL. The actual PDF is retrieved again by the signed endpoint so
+     * it is never cached in the user's session or URL.
+     */
+    private function ensureCertificateAvailable(string $dni, ?int $userId = null): void
+    {
+        if (config('certificates.provider') === 'telecertificacion') {
+            try {
+                abort_unless(app(TelecertificacionService::class)->certificateForDni($dni), 404);
+            } catch (RequestException|RuntimeException $exception) {
+                Log::warning('Could not verify disability certificate availability from Telecertificación.', [
+                    'user_id' => $userId,
+                    'exception' => $exception->getMessage(),
+                ]);
+
+                abort(503, 'El certificado no está disponible temporalmente.');
+            }
+
+            return;
+        }
+
+        $filename = str_replace('{dni}', $dni, (string) config('certificates.filename_pattern'));
+        if (! $this->isSafePdfFilename($filename)) {
+            Log::error('Invalid certificate filename pattern configuration.');
+            abort(500, 'La configuración del certificado no es válida.');
+        }
+
+        abort_unless(Storage::disk((string) config('certificates.disk'))->exists($filename), 404);
     }
 
     private function showFromFilesystem(string $dni): StreamedResponse
