@@ -72,7 +72,9 @@ docker compose --env-file .env.prototype -f docker-compose.prototype.yml ps
 
 Para cargar un dump actualizado, usar el script versionado. Exige una
 confirmación explícita, crea un backup SQL del servidor y solo después importa
-el archivo y ejecuta las migraciones. No borrar el volumen MySQL:
+el archivo y ejecuta las migraciones. Durante la importación la app queda
+temporalmente detenida. Si falla la carga o una migración, el script restaura
+el backup y vuelve a iniciar la app. No borrar el volumen MySQL:
 
 ```bash
 cd deploy
