@@ -32,6 +32,10 @@ en una máquina segura y copiar el resultado, sin comillas, en `APP_KEY`:
 docker run --rm -it php:8.2-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 ```
 
+El archivo `.env.prototype`, los certificados TLS y los documentos montados se
+excluyen explícitamente de la imagen Docker. Deben mantenerse solo en el host
+del servidor y montarse en tiempo de ejecución.
+
 El archivo `.env.prototype` no se sube a Git.
 
 ## Publicar Flutter Web
