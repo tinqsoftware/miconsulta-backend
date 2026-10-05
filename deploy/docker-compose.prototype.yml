@@ -13,9 +13,9 @@ services:
       # Flutter Web build, generated separately from miconsulta_app.
       - ./web:/var/www/web:ro
       # El administrador monta aquí la carpeta de certificados con permisos de solo lectura.
-      - /ruta/host/certificados:/mnt/certificates:ro
+      - ${CERTIFICATES_HOST_PATH:-./certificates}:/mnt/certificates:ro
       # Certificado TLS confiable por los celulares de prueba.
-      - /ruta/host/tls:/etc/nginx/tls:ro
+      - ${TLS_HOST_PATH:-./certs}:/etc/nginx/tls:ro
     depends_on:
       database:
         condition: service_healthy
