@@ -29,7 +29,7 @@ Editar `.env.prototype` con contraseñas fuertes. Generar la llave de Laravel
 en una máquina segura y copiar el resultado, sin comillas, en `APP_KEY`:
 
 ```bash
-docker run --rm -it php:8.2-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+docker run --rm -it php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 ```
 
 El archivo `.env.prototype`, los certificados TLS y los documentos montados se
@@ -52,11 +52,13 @@ rsync -av --delete build/web/ cenate@SERVIDOR:/home/cenate/miconsulta-backend/de
 
 ## Primer arranque
 
-Desde `deploy/` ajustar las dos rutas de host de `docker-compose.prototype.yml`:
+Por defecto, el Compose monta `deploy/certificates` y `deploy/certs`. Si se
+usan rutas distintas en el host, definirlas en `.env.prototype` antes del
+arranque:
 
-```yaml
-/ruta/host/certificados:/mnt/certificates:ro
-/ruta/host/tls:/etc/nginx/tls:ro
+```env
+CERTIFICATES_HOST_PATH=/ruta/host/certificados
+TLS_HOST_PATH=/ruta/host/tls
 ```
 
 Luego levantar el servicio:
@@ -68,17 +70,15 @@ docker compose --env-file .env.prototype -f docker-compose.prototype.yml exec ap
 docker compose --env-file .env.prototype -f docker-compose.prototype.yml ps
 ```
 
-Para cargar un dump actualizado, primero se toma un backup y luego se importa
-explícitamente; no se debe borrar un volumen con información que se necesite
-conservar:
+Para cargar un dump actualizado, usar el script versionado. Exige una
+confirmación explícita, crea un backup SQL del servidor y solo después importa
+el archivo y ejecuta las migraciones. No borrar el volumen MySQL:
 
 ```bash
-set -a
-. ./.env.prototype
-set +a
-docker compose --env-file .env.prototype -f docker-compose.prototype.yml \
-  exec -T database mysql -u root -p"$MYSQL_ROOT_PASSWORD" miconsulta_db \
-  < /ruta/segura/miconsulta-production.sql
+cd deploy
+chmod +x import-real-database.sh
+MI_CONSULTA_CONFIRM_IMPORT=YES \
+  ./import-real-database.sh /ruta/segura/miconsulta-production.sql
 ```
 
 ## Verificación
