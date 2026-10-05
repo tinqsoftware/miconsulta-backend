@@ -10,6 +10,8 @@ services:
       - "443:443"
     volumes:
       - app_storage:/var/www/html/storage
+      # Flutter Web build, generated separately from miconsulta_app.
+      - ./web:/var/www/web:ro
       # El administrador monta aquí la carpeta de certificados con permisos de solo lectura.
       - /ruta/host/certificados:/mnt/certificates:ro
       # Certificado TLS confiable por los celulares de prueba.
@@ -19,6 +21,10 @@ services:
         condition: service_healthy
     networks:
       - app_internal
+    extra_hosts:
+      # Allows TELECERTIFICACION_BASE_URL=http://host.docker.internal:8080
+      # when the CENATE QA API is exposed by the Docker host.
+      - "host.docker.internal:host-gateway"
 
   database:
     image: mysql:8.0

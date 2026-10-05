@@ -7,6 +7,19 @@ return [
     | from the client.
     */
     'enabled' => env('CERTIFICATES_ENABLED', false),
+    'provider' => env('CERTIFICATES_PROVIDER', 'filesystem'),
     'disk' => env('CERTIFICATES_DISK', 'certificates'),
     'filename_pattern' => env('CERTIFICATES_FILENAME_PATTERN', '{dni}.pdf'),
+
+    /*
+    | Telecertificacion is the preferred provider in the EsSalud prototype.
+    | Mi Consulta calls it server-to-server; its token and file URLs never
+    | reach a mobile device or the browser.
+    */
+    'telecertificacion' => [
+        'base_url' => rtrim((string) env('TELECERTIFICACION_BASE_URL', ''), '/'),
+        'token' => env('TELECERTIFICACION_TOKEN'),
+        'timeout_seconds' => (int) env('TELECERTIFICACION_TIMEOUT_SECONDS', 10),
+        'max_pdf_bytes' => (int) env('TELECERTIFICACION_MAX_PDF_BYTES', 15 * 1024 * 1024),
+    ],
 ];

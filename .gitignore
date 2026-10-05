@@ -11,6 +11,7 @@
 .env.production
 /deploy/.env.prototype
 /deploy/database/
+/deploy/web/
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

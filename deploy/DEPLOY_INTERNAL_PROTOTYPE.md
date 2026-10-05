@@ -9,8 +9,9 @@ HTTPS al servicio `app`; MySQL nunca se expone.
 - Un DNS privado para la API, por ejemplo `api.miconsulta.interno`, accesible
   desde el Wi-Fi institucional y desde la VPN de los dispositivos de prueba.
 - Certificado TLS confiable para ese DNS: archivos `tls.crt` y `tls.key`.
-- Una carpeta montada desde el file server con permisos de **solo lectura**.
-  Los archivos deben llamarse `<DNI>.pdf`, por ejemplo `12345678.pdf`.
+- La URL interna y el token de la API de Telecertificación. En el entorno
+  actual se documentó como `http://host.docker.internal:8080` desde el
+  contenedor, pero debe verificarse con infraestructura antes de usarlo.
 - Un dump actualizado de la base de datos, guardado como
   `deploy/database/miconsulta-production.sql`. No usar el dump semilla si se
   requiere mostrar información vigente.
@@ -32,6 +33,18 @@ docker run --rm -it php:8.2-cli php -r "echo 'base64:'.base64_encode(random_byte
 
 Crear la carpeta `deploy/database/` y copiar allí el dump actualizado. Este
 archivo y `.env.prototype` no se suben a Git.
+
+## Publicar Flutter Web
+
+En la máquina que tiene el proyecto Flutter, generar el build con el DNS
+interno de esta API y copiar el resultado al directorio `deploy/web` del
+servidor. El mismo Nginx servirá la web y la API bajo el mismo origen:
+
+```bash
+cd miconsulta_app
+flutter build web --release --dart-define=API_BASE_URL=https://api.miconsulta.interno/api/v1
+rsync -av --delete build/web/ cenate@SERVIDOR:/home/cenate/miconsulta-backend/deploy/web/
+```
 
 ## Primer arranque
 
@@ -71,4 +84,5 @@ Authorization: Bearer <token>
 ```
 
 El endpoint no acepta una ruta ni un DNI enviado por el teléfono: usa el DNI
-del usuario autenticado y devuelve solo su propio PDF.
+del usuario autenticado, consulta Telecertificación por ese DNI y devuelve
+solo el PDF activo y vigente de ese paciente.

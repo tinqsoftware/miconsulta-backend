@@ -28,6 +28,9 @@ Route::prefix('v1')->group(function () {
     // Banners (Pública o protegida, la pondremos pública para facilidad)
     Route::get('/banners/activos', [BannerController::class, 'activos']);
     Route::get('/configuraciones', [ConfiguracionApiController::class, 'index']);
+    Route::get('/certificados/discapacidad/archivo/{dni}', [CertificadoController::class, 'showSigned'])
+        ->whereNumber('dni')
+        ->name('certificados.discapacidad.archivo');
 
     // Rutas protegidas (Requieren token)
     Route::middleware('auth:sanctum')->group(function () {
@@ -78,6 +81,7 @@ Route::prefix('v1')->group(function () {
 
         // Perfil
         Route::get('/perfil', [PerfilController::class, 'miPerfil']);
+        Route::get('/certificados/discapacidad/enlace', [CertificadoController::class, 'link']);
         Route::get('/certificados/discapacidad', [CertificadoController::class, 'show']);
         Route::get('/ipress/activas', [IpressController::class, 'activas']);
         Route::post('/perfil/celular/solicitar-validacion', [ValidacionCelularController::class, 'solicitar']);
